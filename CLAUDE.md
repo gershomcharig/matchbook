@@ -18,6 +18,18 @@ Matchbox is a personal web app for collecting and organizing places to visit. Ke
 - Needs to create Supabase account
 - Primary device: Android (full PWA/share sheet support)
 
+## Development Approach
+**Build small, test often, commit frequently.**
+
+This project follows an incremental "vibe coding" approach:
+- Each step in the roadmap should be small and testable
+- Every step has a **Test** checkpoint to verify it works before moving on
+- Keep changes focused - don't bundle too many things together
+- Catch bugs early by testing each piece in isolation
+- Commit after each working step to maintain a stable baseline
+
+This approach prevents bugs from compounding and makes it easier to identify what broke when something goes wrong. See `roadmap.md` for the detailed step-by-step plan.
+
 ## Key Architecture Decisions
 - **Mobile-first responsive design** with minimal/clean aesthetic
 - **No visible branding** - functional UI only
