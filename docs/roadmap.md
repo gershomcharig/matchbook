@@ -27,29 +27,29 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 - [x] Create placeholder files to establish patterns
 
 ### 0.5 Supabase Setup
-- [ ] Create Supabase project (user does this manually)
-- [ ] Add Supabase credentials to `.env.local`
-- [ ] Install `@supabase/supabase-js`
-- [ ] Create Supabase client utility (`lib/supabase.ts`)
-- [ ] **Test**: Log connection status to console
+- [x] Create Supabase project (user does this manually)
+- [x] Add Supabase credentials to `.env.local`
+- [x] Install `@supabase/supabase-js`
+- [x] Create Supabase client utility (`lib/supabase.ts`)
+- [x] **Test**: Log connection status to console
 
 ### 0.6 Database Schema - Settings
-- [ ] Create `settings` table in Supabase (key, value)
-- [ ] **Test**: Insert and read a test row via Supabase dashboard
+- [x] Create `settings` table in Supabase (key, value)
+- [x] **Test**: Insert and read a test row via Supabase dashboard
 
 ### 0.7 Database Schema - Collections
-- [ ] Create `collections` table (id, name, color, icon, created_at, updated_at)
-- [ ] **Test**: Insert a test collection via dashboard
+- [x] Create `collections` table (id, name, color, icon, created_at, updated_at)
+- [x] **Test**: Insert a test collection via dashboard
 
 ### 0.8 Database Schema - Places
-- [ ] Create `places` table (id, collection_id, name, address, lat, lng, google_maps_url, rating, opening_hours, website, phone, notes, created_at, updated_at, deleted_at)
-- [ ] Add foreign key to collections
-- [ ] **Test**: Insert a test place via dashboard
+- [x] Create `places` table (id, collection_id, name, address, lat, lng, google_maps_url, rating, opening_hours, website, phone, notes, created_at, updated_at, deleted_at)
+- [x] Add foreign key to collections
+- [x] **Test**: Insert a test place via dashboard
 
 ### 0.9 Database Schema - Tags
-- [ ] Create `tags` table (id, name)
-- [ ] Create `place_tags` junction table (place_id, tag_id)
-- [ ] **Test**: Insert test tags and link to a place
+- [x] Create `tags` table (id, name)
+- [x] Create `place_tags` junction table (place_id, tag_id)
+- [x] **Test**: Insert test tags and link to a place
 
 ---
 
