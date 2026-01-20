@@ -9,22 +9,22 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 ## Phase 0: Project Setup
 
 ### 0.1 Initialize Next.js
-- [ ] Create Next.js project with App Router
-- [ ] Verify dev server runs (`npm run dev`)
-- [ ] **Test**: See default Next.js page at localhost:3000
+- [x] Create Next.js project with App Router
+- [x] Verify dev server runs (`npm run dev`)
+- [x] **Test**: See default Next.js page at localhost:3000
 
 ### 0.2 Tailwind CSS
-- [ ] Install and configure Tailwind CSS
-- [ ] **Test**: Add a colored div, verify styling works
+- [x] Install and configure Tailwind CSS
+- [x] **Test**: Add a colored div, verify styling works
 
 ### 0.3 Environment & Git
-- [ ] Create `.env.local.example` listing required variables
-- [ ] Verify `.gitignore` excludes `.env.local`, `node_modules`, `.next`
-- [ ] **Test**: Commit and push, verify no secrets in repo
+- [x] Create `.env.local.example` listing required variables
+- [x] Verify `.gitignore` excludes `.env.local`, `node_modules`, `.next`
+- [x] **Test**: Commit and push, verify no secrets in repo
 
 ### 0.4 Project Structure
-- [ ] Create folder structure: `components/`, `lib/`, `app/`
-- [ ] Create placeholder files to establish patterns
+- [x] Create folder structure: `components/`, `lib/`, `app/`
+- [x] Create placeholder files to establish patterns
 
 ### 0.5 Supabase Setup
 - [ ] Create Supabase project (user does this manually)
