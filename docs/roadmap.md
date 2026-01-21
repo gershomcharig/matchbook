@@ -132,10 +132,10 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 - [x] **Test**: Cannot access main app without login
 
 ### 2.9 Logout
-- [ ] Add logout button (in a corner/menu for now)
-- [ ] Clear session token on logout
-- [ ] Redirect to login
-- [ ] **Test**: Logout clears session, requires re-login
+- [x] Add logout button (in a corner/menu for now)
+- [x] Clear session token on logout
+- [x] Redirect to login
+- [x] **Test**: Logout clears session, requires re-login
 
 ---
 

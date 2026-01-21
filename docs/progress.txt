@@ -7,8 +7,8 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Current Status
 **Last Updated**: 2026-01-21
-**Current Phase**: Phase 2 In Progress
-**Next Step**: Phase 2.9 - Logout
+**Current Phase**: Phase 2 COMPLETE
+**Next Step**: Phase 3.1 - Color Palette
 
 ---
 
@@ -34,7 +34,7 @@ Read this file at the start of each session to maintain context and avoid repeat
 - [x] 1.4 Responsive layout shell - components/Layout.tsx with flex layout
 - [x] 1.5 Empty state overlay - components/EmptyState.tsx with prompt message
 
-### Phase 2: Password Protection (IN PROGRESS)
+### Phase 2: Password Protection (COMPLETE)
 - [x] 2.1 Password Setup Screen - src/app/setup/page.tsx
   - Form with password and confirm password inputs
   - Show/hide password toggle using lucide-react icons
@@ -85,6 +85,12 @@ Read this file at the start of each session to maintain context and avoid repeat
   - Shows loading spinner during auth check
   - Wrapped root layout with AuthGuard for app-wide protection
   - Public routes (/setup, /login) bypass auth check
+- [x] 2.9 Logout - src/components/Layout.tsx
+  - Added logout button in top-right corner with glass-morphism style
+  - Button uses LogOut icon from lucide-react
+  - Clicking logout clears session token via clearSessionToken()
+  - Redirects to login page after logout
+  - Styled to match existing UI aesthetic with backdrop blur and shadows
 
 ---
 
@@ -173,6 +179,9 @@ Read this file at the start of each session to maintain context and avoid repeat
 ### 2026-01-21 (Phase 2.8)
 - Created: src/components/AuthGuard.tsx (route protection component)
 - Modified: src/app/layout.tsx (wrapped with AuthGuard)
+
+### 2026-01-21 (Phase 2.9)
+- Modified: src/components/Layout.tsx (added logout button and handler)
 
 ---
 
