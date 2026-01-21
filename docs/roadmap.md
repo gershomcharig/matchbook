@@ -110,10 +110,10 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 - [x] **Test**: Form renders
 
 ### 2.5 Password Verification
-- [ ] Fetch stored hash from `settings`
-- [ ] Compare entered password with hash
-- [ ] Show error on mismatch
-- [ ] **Test**: Wrong password shows error, correct password passes
+- [x] Fetch stored hash from `settings`
+- [x] Compare entered password with hash
+- [x] Show error on mismatch
+- [x] **Test**: Wrong password shows error, correct password passes
 
 ### 2.6 Session Token
 - [ ] On successful login, generate session token

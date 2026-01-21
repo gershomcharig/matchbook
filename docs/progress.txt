@@ -8,7 +8,7 @@ Read this file at the start of each session to maintain context and avoid repeat
 ## Current Status
 **Last Updated**: 2026-01-21
 **Current Phase**: Phase 2 In Progress
-**Next Step**: Phase 2.5 - Password Verification
+**Next Step**: Phase 2.6 - Session Token
 
 ---
 
@@ -58,6 +58,13 @@ Read this file at the start of each session to maintain context and avoid repeat
   - Show/hide password toggle
   - Error display for failed login attempts
   - Matches setup page design aesthetic
+- [x] 2.5 Password Verification - src/app/login/actions.ts
+  - Server action verifyPasswordAction() fetches hash from settings table
+  - Uses verifyPassword() from lib/auth.ts for constant-time comparison
+  - Returns success/error object to client
+  - Login form wired to server action with error handling
+  - Incorrect password shows user-friendly error message
+  - Correct password redirects to main page (session token to be added in 2.6)
 
 ---
 
@@ -131,6 +138,10 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ### 2026-01-21 (Phase 2.4)
 - Created: src/app/login/page.tsx (login form)
+
+### 2026-01-21 (Phase 2.5)
+- Created: src/app/login/actions.ts (password verification server action)
+- Modified: src/app/login/page.tsx (connected to verifyPasswordAction)
 
 ---
 

@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MapPin, Eye, EyeOff, Lock, AlertCircle } from 'lucide-react';
+import { verifyPasswordAction } from './actions';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,9 +19,22 @@ export default function LoginPage() {
     setIsSubmitting(true);
     setError(null);
 
-    // TODO: Verify password (Phase 2.5)
-    console.log('Login submitted');
-    setIsSubmitting(false);
+    try {
+      const result = await verifyPasswordAction(password);
+
+      if (result.success) {
+        // TODO: Set session token (Phase 2.6)
+        // For now, just redirect to main page
+        router.push('/');
+      } else {
+        setError(result.error || 'Login failed');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
