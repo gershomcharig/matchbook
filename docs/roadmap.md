@@ -56,33 +56,33 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 ## Phase 1: Map Foundation
 
 ### 1.1 Mapbox Setup
-- [ ] Get Mapbox API key (user has account)
-- [ ] Add key to `.env.local`
-- [ ] Install `mapbox-gl` and `react-map-gl`
-- [ ] **Test**: Verify packages installed
+- [x] Get Mapbox API key (user has account)
+- [x] Add key to `.env.local`
+- [x] Install `mapbox-gl` and `react-map-gl`
+- [x] **Test**: Verify packages installed
 
 ### 1.2 Basic Map Component
-- [ ] Create `components/Map.tsx`
-- [ ] Render a basic Mapbox map
-- [ ] Set initial view to London (51.5074, -0.1278)
-- [ ] **Test**: See map centered on London
+- [x] Create `components/Map.tsx`
+- [x] Render a basic Mapbox map
+- [x] Set initial view to London (51.5074, -0.1278)
+- [x] **Test**: See map centered on London
 
 ### 1.3 Map Styling
-- [ ] Choose a clean Mapbox style (light/minimal)
-- [ ] Make map fill the viewport
-- [ ] **Test**: Map looks good, fills screen
+- [x] Choose a clean Mapbox style (light/minimal)
+- [x] Make map fill the viewport
+- [x] **Test**: Map looks good, fills screen
 
 ### 1.4 Responsive Layout Shell
-- [ ] Create basic app layout component
-- [ ] Mobile: map fills screen
-- [ ] Desktop: map with space for future side panel
-- [ ] **Test**: Resize browser, layout adapts
+- [x] Create basic app layout component
+- [x] Mobile: map fills screen
+- [x] Desktop: map with space for future side panel
+- [x] **Test**: Resize browser, layout adapts
 
 ### 1.5 Empty State Overlay
-- [ ] Create overlay component for empty state
-- [ ] Display "Paste a Google Maps link to get started"
-- [ ] Style: centered, readable, doesn't block map interaction
-- [ ] **Test**: Overlay visible on empty app
+- [x] Create overlay component for empty state
+- [x] Display "Paste a Google Maps link to get started"
+- [x] Style: centered, readable, doesn't block map interaction
+- [x] **Test**: Overlay visible on empty app
 
 ---
 

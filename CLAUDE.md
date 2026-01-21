@@ -30,6 +30,45 @@ This project follows an incremental "vibe coding" approach:
 
 This approach prevents bugs from compounding and makes it easier to identify what broke when something goes wrong. See `docs/roadmap.md` for the detailed step-by-step plan.
 
+## Working on Tasks (MANDATORY)
+
+### Finding the Next Task
+When asked to work on the next task or continue development:
+1. **Read `docs/roadmap.md`** to find the first unchecked `[ ]` item
+2. **Read `docs/progress.txt`** for context on what was done and any blockers
+3. Start working on that task
+
+### Before Starting Any Task
+1. **Invoke required skills**:
+   - `/vercel-react-best-practices` - React/Next.js performance patterns
+   - `/frontend-design` - Distinctive, production-grade UI design
+2. **Define Clear Acceptance Criteria** - Before writing any code, list specific, testable criteria that define "done" for the task. Example:
+   ```
+   ### Clear Completion Criteria
+   1. File X exists at path Y
+   2. Component renders without errors
+   3. Feature Z works when tested manually
+   4. Build passes with no errors
+   ```
+
+### After Completing Any Task
+1. **Update `docs/roadmap.md`** - Change `[ ]` to `[x]` for completed items
+2. **Update `docs/progress.txt`** - Log what was done, decisions made, any issues
+3. **Commit the changes** if the user requests it
+
+### Summary Checklist
+```
+□ Read roadmap.md → find next task
+□ Read progress.txt → get context
+□ Invoke /vercel-react-best-practices
+□ Invoke /frontend-design
+□ Define acceptance criteria
+□ Implement the task
+□ Test against acceptance criteria
+□ Update roadmap.md (mark complete)
+□ Update progress.txt (log work)
+```
+
 ## Key Architecture Decisions
 - **Mobile-first responsive design** with minimal/clean aesthetic
 - **No visible branding** - functional UI only
