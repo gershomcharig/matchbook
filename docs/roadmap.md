@@ -142,9 +142,9 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 ## Phase 3: Collections (Basic)
 
 ### 3.1 Color Palette
-- [ ] Define 12-16 preset colors as constants
-- [ ] Create color picker component (grid of color swatches)
-- [ ] **Test**: Color picker renders, selection works
+- [x] Define 12-16 preset colors as constants
+- [x] Create color picker component (grid of color swatches)
+- [x] **Test**: Color picker renders, selection works
 
 ### 3.2 Icon Set Curation
 - [ ] Install `lucide-react`

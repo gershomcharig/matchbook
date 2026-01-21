@@ -7,12 +7,19 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Current Status
 **Last Updated**: 2026-01-21
-**Current Phase**: Phase 2 COMPLETE
-**Next Step**: Phase 3.1 - Color Palette
+**Current Phase**: Phase 3 IN PROGRESS
+**Next Step**: Phase 3.2 - Icon Set Curation
 
 ---
 
 ## Completed Tasks
+
+### Phase 3: Collections (IN PROGRESS)
+- [x] 3.1 Color Palette - src/lib/colors.ts and src/components/ColorPicker.tsx
+  - 16 curated colors: warm (red, orange, amber, yellow), cool (lime, green, teal, cyan), blues/purples (blue, indigo, violet, purple), pinks/neutrals (pink, rose, stone, slate)
+  - ColorPicker component: 8-column grid, selection state with checkmark, hover/focus animations
+  - Helper functions: findColorByValue(), getContrastColor()
+  - Default color: Amber (matches app accent)
 
 ### Phase 0: Project Setup (COMPLETE)
 - [x] 0.1 Initialize Next.js with App Router (commit: 1b205b7)
@@ -183,6 +190,10 @@ Read this file at the start of each session to maintain context and avoid repeat
 ### 2026-01-21 (Phase 2.9)
 - Modified: src/components/Layout.tsx (added logout button and handler)
 
+### 2026-01-21 (Phase 3.1)
+- Created: src/lib/colors.ts (16 preset colors for collection pins)
+- Created: src/components/ColorPicker.tsx (color swatch grid with selection)
+
 ---
 
 ## Learnings
@@ -208,10 +219,10 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Next Steps (from roadmap.md)
 
-1. Phase 2.5: Password verification logic
-2. Phase 2.6: Session token management
-3. Phase 2.7: Auth state check
-4. Phase 2.8: Route protection
-5. Phase 2.9: Logout functionality
+1. Phase 3.2: Icon Set Curation (install lucide-react, curate 50-80 place icons)
+2. Phase 3.3: Icon Picker Component
+3. Phase 3.4: Create Collection - UI (modal/dialog)
+4. Phase 3.5: Create Collection - Save to database
+5. Phase 3.6-3.8: Fetch, display collections, default collection
 
 Reference: docs/roadmap.md for full task breakdown
