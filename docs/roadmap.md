@@ -178,9 +178,9 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 - [x] **Test**: Collections visible in UI
 
 ### 3.8 Default Collection
-- [ ] On first place add (later), auto-create "My Places" if no collections exist
-- [ ] Default color and icon
-- [ ] (Implementation will connect in Phase 4)
+- [x] On first place add (later), auto-create "My Places" if no collections exist
+- [x] Default color and icon
+- [x] (Implementation will connect in Phase 4)
 
 ---
 
