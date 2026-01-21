@@ -152,10 +152,10 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 - [x] **Test**: Can import and render selected icons
 
 ### 3.3 Icon Picker Component
-- [ ] Create icon picker (grid of icons)
-- [ ] Scrollable if many icons
-- [ ] Selection state
-- [ ] **Test**: Icon picker renders, selection works
+- [x] Create icon picker (grid of icons)
+- [x] Scrollable if many icons
+- [x] Selection state
+- [x] **Test**: Icon picker renders, selection works
 
 ### 3.4 Create Collection - UI
 - [ ] Create "New Collection" modal/dialog

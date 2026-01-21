@@ -8,7 +8,7 @@ Read this file at the start of each session to maintain context and avoid repeat
 ## Current Status
 **Last Updated**: 2026-01-21
 **Current Phase**: Phase 3 IN PROGRESS
-**Next Step**: Phase 3.3 - Icon Picker Component
+**Next Step**: Phase 3.4 - Create Collection UI
 
 ---
 
@@ -26,6 +26,13 @@ Read this file at the start of each session to maintain context and avoid repeat
   - Categories: General, Food & Drink, Shopping, Entertainment, Recreation, Travel, Health, Education, Home, Nature, Services
   - Helper functions: findIconByName(), getIconCategories(), getIconsByCategory()
   - Default icon: MapPin
+- [x] 3.3 Icon Picker Component - src/components/IconPicker.tsx
+  - Scrollable grid (max-h-64) with 8-column layout
+  - Search functionality to filter icons by name/category
+  - Category filter pills for quick filtering
+  - Selection state with checkmark badge
+  - Supports custom accent color via prop
+  - Icons grouped by category with headers
 
 ### Phase 0: Project Setup (COMPLETE)
 - [x] 0.1 Initialize Next.js with App Router (commit: 1b205b7)
@@ -203,6 +210,9 @@ Read this file at the start of each session to maintain context and avoid repeat
 ### 2026-01-21 (Phase 3.2)
 - Created: src/lib/icons.ts (76 curated place-related icons)
 
+### 2026-01-21 (Phase 3.3)
+- Created: src/components/IconPicker.tsx (scrollable icon grid with search and filtering)
+
 ---
 
 ## Learnings
@@ -228,8 +238,8 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Next Steps (from roadmap.md)
 
-1. Phase 3.3: Icon Picker Component
-2. Phase 3.4: Create Collection - UI (modal/dialog)
+1. Phase 3.4: Create Collection - UI (modal/dialog)
+2. Phase 3.5: Create Collection - Save to database
 3. Phase 3.4: Create Collection - UI (modal/dialog)
 4. Phase 3.5: Create Collection - Save to database
 5. Phase 3.6-3.8: Fetch, display collections, default collection
