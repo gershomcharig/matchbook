@@ -111,7 +111,7 @@ export async function verifyPassword(password: string, storedHash: string): Prom
 /**
  * Session token management
  */
-const SESSION_TOKEN_KEY = 'matchbox_session_token';
+const SESSION_TOKEN_KEY = 'matchbook_session_token';
 const TOKEN_LENGTH = 32; // 32 bytes = 256 bits
 
 /**

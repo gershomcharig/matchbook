@@ -1,10 +1,10 @@
-# Matchbox PRD
+# Matchbook PRD
 
 ## What is it
 
-Matchbox is a personal place-saving app that makes it effortless to collect and organize locations you want to visit.
+Matchbook is a personal place-saving app that makes it effortless to collect and organize locations you want to visit.
 
-**The core idea**: Paste a Google Maps link (or share it directly from the Google Maps app on Android) and Matchbox automatically extracts all the place details—name, address, rating, hours, and more. No typing, no forms, just paste and save.
+**The core idea**: Paste a Google Maps link (or share it directly from the Google Maps app on Android) and Matchbook automatically extracts all the place details—name, address, rating, hours, and more. No typing, no forms, just paste and save.
 
 **Key features**:
 - **Effortless saving**: Paste links or share from Google Maps to instantly save places

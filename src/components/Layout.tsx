@@ -1,26 +1,54 @@
 'use client';
 
-import { ReactNode, useState, useCallback } from 'react';
+import { ReactNode, useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Plus, Layers } from 'lucide-react';
+import { LogOut, Plus, Layers, Trash2 } from 'lucide-react';
 import { clearSessionToken } from '@/lib/auth';
+import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl } from '@/lib/maps';
+import { reverseGeocode } from '@/lib/geocoding';
 import NewCollectionModal from './NewCollectionModal';
+import AddPlaceModal, { type ExtractedPlace } from './AddPlaceModal';
 import CollectionsList from './CollectionsList';
 import { createCollection, type Collection } from '@/app/actions/collections';
+import { createPlace } from '@/app/actions/places';
+import { ToastContainer, generateToastId, type ToastData } from './Toast';
 
 interface LayoutProps {
   children: ReactNode;
   sidePanel?: ReactNode;
   onCollectionSelected?: (collection: Collection) => void;
+  /** Callback when a place is added */
+  onPlaceAdded?: () => void;
 }
 
-export default function Layout({ children, sidePanel, onCollectionSelected }: LayoutProps) {
+export default function Layout({ children, sidePanel, onCollectionSelected, onPlaceAdded }: LayoutProps) {
   const router = useRouter();
   const [isNewCollectionOpen, setIsNewCollectionOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMobileCollectionsOpen, setIsMobileCollectionsOpen] = useState(false);
   const [collectionsRefreshTrigger, setCollectionsRefreshTrigger] = useState(0);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | undefined>();
+
+  // Add Place modal state
+  const [isAddPlaceOpen, setIsAddPlaceOpen] = useState(false);
+  const [extractedPlace, setExtractedPlace] = useState<ExtractedPlace | null>(null);
+  const [isAddingPlace, setIsAddingPlace] = useState(false);
+
+  // Toast notifications
+  const [toasts, setToasts] = useState<ToastData[]>([]);
+
+  const showToast = useCallback((type: ToastData['type'], message: string) => {
+    const newToast: ToastData = {
+      id: generateToastId(),
+      type,
+      message,
+    };
+    setToasts((prev) => [...prev, newToast]);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const handleLogout = () => {
     clearSessionToken();
@@ -59,6 +87,138 @@ export default function Layout({ children, sidePanel, onCollectionSelected }: La
     setIsNewCollectionOpen(true);
   };
 
+  // Handle saving a place from the Add Place modal
+  const handleSavePlace = async (data: { place: ExtractedPlace; collectionId: string }) => {
+    setIsAddingPlace(true);
+    console.log('[Saving Place]', data);
+
+    const result = await createPlace({
+      name: data.place.name,
+      address: data.place.address,
+      lat: data.place.lat,
+      lng: data.place.lng,
+      googleMapsUrl: data.place.googleMapsUrl,
+      collectionId: data.collectionId,
+    });
+
+    setIsAddingPlace(false);
+
+    if (result.success) {
+      console.log('[Place Saved Successfully]', result.place);
+      setIsAddPlaceOpen(false);
+      setExtractedPlace(null);
+      showToast('success', `"${data.place.name}" added to your collection!`);
+      // Notify parent to refresh places
+      onPlaceAdded?.();
+    } else {
+      console.error('[Failed to Save Place]', result.error);
+      showToast('error', result.error || 'Failed to save place. Please try again.');
+    }
+  };
+
+  const handleCloseAddPlace = () => {
+    setIsAddPlaceOpen(false);
+    setExtractedPlace(null);
+  };
+
+  // Global paste event listener
+  useEffect(() => {
+    const handlePaste = async (event: ClipboardEvent) => {
+      // Get pasted text
+      const pastedText = event.clipboardData?.getData('text');
+
+      if (pastedText) {
+        console.log('[Paste Detected]', pastedText);
+
+        // Check if it's a Google Maps URL
+        const detection = detectMapsUrl(pastedText);
+
+        if (detection.isValid && detection.url) {
+          console.log('[Google Maps URL Detected]', detection.url);
+
+          // Extract place name from URL (if available)
+          const urlPlaceName = extractPlaceNameFromUrl(detection.url);
+          if (urlPlaceName) {
+            console.log('[Place Name from URL]', urlPlaceName);
+          }
+
+          // Extract coordinates from URL
+          const coordinates = extractCoordinatesFromUrl(detection.url);
+
+          if (coordinates) {
+            console.log('[Coordinates Extracted]', coordinates);
+
+            // Reverse geocode to get place information
+            console.log('[Fetching place info from geocoding...]');
+            const placeInfo = await reverseGeocode(coordinates);
+
+            if (placeInfo) {
+              // Prefer URL-extracted name if available (more accurate for named places)
+              const finalName = urlPlaceName || placeInfo.name;
+
+              // Build extracted place data
+              const extractedPlaceData: ExtractedPlace = {
+                name: finalName,
+                address: placeInfo.address,
+                lat: placeInfo.lat,
+                lng: placeInfo.lng,
+                googleMapsUrl: detection.url,
+                urlExtractedName: urlPlaceName || null,
+                geocodedName: placeInfo.name,
+                displayName: placeInfo.displayName,
+                placeType: placeInfo.placeType || null,
+                city: placeInfo.city || null,
+                country: placeInfo.country || null,
+              };
+
+              console.log('[All Extracted Place Data]', extractedPlaceData);
+
+              // Open the Add Place modal (Phase 4.6)
+              setExtractedPlace(extractedPlaceData);
+              setIsAddPlaceOpen(true);
+            } else {
+              console.error('[Failed to get place info] Geocoding failed');
+              // If we have URL name and coordinates, still allow adding with partial data
+              if (urlPlaceName && coordinates) {
+                const partialPlaceData: ExtractedPlace = {
+                  name: urlPlaceName,
+                  address: 'Address not available',
+                  lat: coordinates.lat,
+                  lng: coordinates.lng,
+                  googleMapsUrl: detection.url,
+                  urlExtractedName: urlPlaceName,
+                  geocodedName: undefined,
+                  displayName: undefined,
+                  placeType: null,
+                  city: null,
+                  country: null,
+                };
+                setExtractedPlace(partialPlaceData);
+                setIsAddPlaceOpen(true);
+                showToast('error', 'Could not get full address info. You can still save the place.');
+              } else {
+                showToast('error', 'Could not get place information. Please try again or add manually.');
+              }
+            }
+          } else {
+            console.log('[No coordinates found in URL] Cannot extract place info');
+            showToast('error', 'Could not find location in URL. Try a different Google Maps link.');
+          }
+        }
+        // Note: We intentionally don't show error for non-Maps URLs to avoid spamming
+        // when users paste normal text
+      }
+    };
+
+    // Add event listener to window
+    window.addEventListener('paste', handlePaste);
+
+    // Cleanup on unmount
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
+  }, [showToast]);
+
   return (
     <div className="h-screen w-screen overflow-hidden flex">
       {/* Map area - fills available space */}
@@ -85,6 +245,16 @@ export default function Layout({ children, sidePanel, onCollectionSelected }: La
             <span className="text-sm">New Collection</span>
           </button>
 
+          {/* Trash button */}
+          <button
+            onClick={() => router.push('/trash')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50"
+            title="Trash"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span className="text-sm font-medium hidden sm:inline">Trash</span>
+          </button>
+
           {/* Logout button */}
           <button
             onClick={handleLogout}
@@ -105,6 +275,15 @@ export default function Layout({ children, sidePanel, onCollectionSelected }: La
         onClose={() => setIsNewCollectionOpen(false)}
         onSubmit={handleCreateCollection}
         isSubmitting={isSubmitting}
+      />
+
+      {/* Add Place Modal */}
+      <AddPlaceModal
+        isOpen={isAddPlaceOpen}
+        onClose={handleCloseAddPlace}
+        place={extractedPlace}
+        onSave={handleSavePlace}
+        isSubmitting={isAddingPlace}
       />
 
       {/* Mobile Collections Panel (slide-up) */}
@@ -145,6 +324,9 @@ export default function Layout({ children, sidePanel, onCollectionSelected }: La
           />
         )}
       </div>
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

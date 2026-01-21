@@ -1,4 +1,4 @@
-# Matchbox Development Progress
+# Matchbook Development Progress
 
 This file tracks accomplishments, failures, and learnings across execution loops.
 Read this file at the start of each session to maintain context and avoid repeating mistakes.
@@ -7,12 +7,265 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Current Status
 **Last Updated**: 2026-01-21
-**Current Phase**: Phase 3 COMPLETE
-**Next Step**: Phase 4.1 - Paste Listener
+**Current Phase**: Phase 7 COMPLETE
+**Next Step**: Phase 8.1 - Edit Collection UI
 
 ---
 
 ## Completed Tasks
+
+### Phase 7: Edit & Delete Places (COMPLETE)
+- [x] 7.1-7.2 Edit Place Modal - src/components/EditPlaceModal.tsx
+  - Modal with pre-filled name and notes inputs
+  - updatePlace() server action in places.ts
+  - Saves changes to database, closes modal, refreshes data
+  - Error handling with error message display
+- [x] 7.3-7.4 Tag Input Component - src/components/TagInput.tsx
+  - Type to add tags, press Enter or comma to confirm
+  - Tags displayed as chips with X button to remove
+  - Backspace removes last tag when input is empty
+  - Maximum 10 tags enforced
+  - Server actions: getTags(), getTagsForPlace(), getOrCreateTag(), updatePlaceTags()
+  - Tags stored in tags table, relationships in place_tags junction table
+- [x] 7.5 Display Tags in Panel - src/components/PlaceDetailsPanel.tsx
+  - Tags section with Tag icon
+  - Styled as amber chips (matches color scheme)
+  - Clickable - logs to console, will filter in Phase 9
+  - Fetched separately via getTagsForPlace() when place selected
+- [x] 7.6 Change Collection - src/components/EditPlaceModal.tsx
+  - Collection dropdown with color/icon preview
+  - Fetches collections on modal open
+  - Updates collection_id in database on save
+- [x] 7.7-7.8 Delete with Soft Delete
+  - "Delete this place" link in edit modal
+  - Confirmation UI appears on click
+  - softDeletePlace() sets deleted_at timestamp
+  - Deleted places excluded from normal queries (already implemented)
+  - Panel closes after deletion
+- [x] 7.9 Trash View - src/app/trash/page.tsx
+  - Lists all soft-deleted places with collection info
+  - Shows days remaining until permanent deletion (30 days)
+  - getDeletedPlaces() server action fetches deleted_at IS NOT NULL
+  - Empty state when trash is empty
+  - Trash button added to Layout header
+- [x] 7.10 Restore from Trash
+  - Restore button (green) on each trash item
+  - restorePlace() clears deleted_at timestamp
+  - Place reappears on map after restore
+- [x] 7.11 Permanent Delete
+  - Delete forever button (red) on each trash item
+  - Confirmation dialog with warning
+  - permanentlyDeletePlace() deletes place_tags then place
+  - Place removed from trash after permanent deletion
+- [x] Page Integration - src/app/page.tsx
+  - Edit button (pencil icon) added to panel header
+  - EditPlaceModal opens when edit clicked
+  - Tags fetched when place selected
+  - Refresh places after edit save or delete
+
+### Phase 6: Place Details Panel (COMPLETE)
+- [x] 6.1-6.3 Responsive Panel Component - src/components/PlaceDetailsPanel.tsx
+  - Single component handles both mobile and desktop views
+  - Mobile: Slide-up panel from bottom with backdrop blur
+  - Desktop: Side panel fixed on right (380px width)
+  - CSS transitions for smooth open/close animations (300ms)
+  - Responsive detection via window.innerWidth check (< 1024px = mobile)
+  - Drag handle on mobile for visual affordance
+  - X button to close on both variants
+- [x] 6.4 Wire Up Panel - src/app/page.tsx
+  - selectedPlace and isPanelOpen state management
+  - handleMarkerClick finds place by ID and opens panel
+  - handleClosePanel with delayed clear for animation
+  - Panel receives place data and callbacks
+- [x] 6.5 Display Basic Info
+  - Place name in header (truncated if long)
+  - Address with MapPin icon
+- [x] 6.6 Display Extended Info
+  - Rating with Star icon (amber filled)
+  - Opening hours with Clock icon
+  - Website with Globe icon (displays hostname only)
+  - Phone with Phone icon (clickable tel: link)
+  - Notes section with border separator
+  - All fields conditionally rendered only if present
+- [x] 6.7 Collection Link
+  - Collection badge below title
+  - Shows collection icon and name
+  - Styled with collection color (20% opacity background)
+  - Clickable - triggers onCollectionClick callback
+  - Logs to console, will filter map in Phase 9
+- [x] 6.8 Copy Address Button
+  - "Copy address" button below address text
+  - Uses navigator.clipboard.writeText()
+  - Shows checkmark and "Copied!" feedback for 2 seconds
+  - Resets when place changes
+- [x] 6.9 Navigation Button
+  - "Get Directions" primary action button
+  - Opens Google Maps directions URL in new tab
+  - Uses destination coordinates: /maps/dir/?api=1&destination=lat,lng
+  - Styled with amber/orange gradient (matches app theme)
+- [x] 6.10 View on Google Maps Link
+  - Secondary action button below directions
+  - Opens original google_maps_url if available
+  - Falls back to coordinate-based URL if no original
+  - Styled as secondary button (zinc background)
+
+### Phase 5: Display Places on Map (COMPLETE)
+- [x] 5.1 Fetch Places - src/app/actions/places.ts
+  - Created getPlacesWithCollections() function
+  - PlaceWithCollection interface extends Place with collection data
+  - Uses Supabase join to fetch places with their collection (id, name, color, icon)
+  - Excludes soft-deleted places (deleted_at is null)
+  - Console logs show "[Places Loaded]" with count
+- [x] 5.2 Basic Markers - src/components/Map.tsx
+  - Map component updated to accept places prop
+  - Renders MapMarker for each place with valid coordinates
+  - Uses react-map-gl Marker component with anchor="bottom"
+- [x] 5.3 Custom Pin Color - src/components/MapMarker.tsx
+  - Created custom MapMarker component with teardrop SVG shape
+  - Pin color uses collection.color (hex)
+  - Drop shadow for depth (filter: drop-shadow)
+  - Hover/active scale transitions for interactivity
+- [x] 5.4 Pin Icons - src/components/MapMarker.tsx
+  - Icon displayed in center of pin using lucide-react
+  - Finds icon by name using findIconByName() from lib/icons.ts
+  - Contrast color (white/black) calculated based on background luminance
+  - Icon sized at 14px with 2.5 stroke width for visibility
+- [x] 5.5 Zoom to Fit All - src/components/Map.tsx
+  - Uses mapRef with useEffect to fit bounds when places change
+  - Single place: flyTo with zoom 15
+  - Multiple places: fitBounds with calculated bounds
+  - No places: center on London (default)
+  - Responsive padding: more on desktop (sidebar), less on mobile
+  - Max zoom capped at 16 to prevent over-zooming
+- [x] 5.6 Click Handler - src/components/MapMarker.tsx
+  - onClick prop passed to Marker component
+  - Uses MarkerEvent<MouseEvent> type for proper typing
+  - Stops event propagation to prevent map click
+  - Console logs "[Marker Clicked] Place ID: xxx"
+  - onMarkerClick callback wired from page through Map component
+- [x] Page Integration - src/app/page.tsx
+  - Page converted to client component for state management
+  - Fetches places on mount using getPlacesWithCollections()
+  - Passes places to Map component
+  - onPlaceAdded callback refreshes places when new place saved
+  - Empty state only shown when loading complete and no places
+
+### Phase 4: Add Place via Paste (COMPLETE)
+- [x] 4.1 Paste Listener - src/components/Layout.tsx
+  - Added global paste event listener using useEffect
+  - Listens to window paste events across entire application
+  - Logs pasted text to console with [Paste Detected] prefix
+  - Proper cleanup on component unmount to prevent memory leaks
+  - Works alongside normal paste operations in text inputs
+  - Build passes successfully
+- [x] 4.2 Google Maps URL Detection - src/lib/maps.ts
+  - Created utility functions: isGoogleMapsUrl(), extractGoogleMapsUrl(), detectMapsUrl()
+  - Supports multiple URL formats:
+    - Standard google.com/maps URLs
+    - maps.google.com domain
+    - Regional Google domains (.co.uk, .de, .au, etc.)
+    - Shortened goo.gl/maps URLs
+    - New maps.app.goo.gl format
+  - Automatically adds https:// protocol if missing
+  - Returns MapsUrlDetectionResult with validation status and extracted URL
+  - Integrated with paste listener in Layout component
+  - Console logs show "[Google Maps URL Detected]" or "[Not a Google Maps URL]"
+  - Created test-urls.md documenting supported formats
+  - Build passes successfully
+- [x] 4.3 Extract Coordinates from URL - src/lib/maps.ts
+  - Created extractCoordinatesFromUrl() function with Coordinates type
+  - Handles 5 different coordinate formats in Google Maps URLs:
+    - /@lat,lng format (most common): /@51.5007292,-0.1268141,17z
+    - !3d!4d format: !3d51.5007!4d-0.1268
+    - ?q=lat,lng format: ?q=51.5074,-0.1278
+    - ?ll=lat,lng format: ?ll=52.520008,13.404954
+    - ?center=lat,lng format: ?center=40.7128,-74.0060
+  - Validates coordinates are within valid geographic ranges (lat: -90 to 90, lng: -180 to 180)
+  - Returns null if coordinates cannot be extracted or are invalid
+  - isValidCoordinate() helper function for validation
+  - Error handling with try/catch
+  - Integrated with paste handler in Layout.tsx
+  - Console logs show "[Coordinates Extracted]" with lat/lng values
+  - Updated test-urls.md with coordinate extraction examples
+  - Build passes successfully
+- [x] 4.4 Place Data Extraction (Basic) - src/lib/geocoding.ts
+  - Created reverseGeocode() function using OpenStreetMap Nominatim API (free, no API key required)
+  - Created forwardGeocode() function for address-to-coordinates conversion (for Phase 12)
+  - PlaceInfo interface with name, address, displayName, lat, lng, placeType, city, country
+  - Extracts place name from multiple Nominatim response fields (amenity, building, shop, tourism, etc.)
+  - Builds formatted address from components (house_number, road, suburb, city, postcode, country)
+  - Proper User-Agent header for Nominatim API compliance
+  - Rate limiting note: 1 request per second (Nominatim usage policy)
+  - Error handling with try/catch for network failures
+  - Integrated with paste handler in Layout.tsx (async/await)
+  - Console logs show "[Fetching place info...]" and "[Place Info Retrieved]" with name/address
+  - Created geocoding.test-examples.md with test cases for Big Ben, Eiffel Tower, Sydney Opera House, Colosseum
+  - Build passes successfully
+- [x] 4.5 Place Data Extraction (Extended) - src/lib/maps.ts, src/lib/geocoding.ts
+  - **Research findings**: Free APIs (Nominatim) cannot provide rating, hours, website, phone
+    - Google Places API required for this data (paid, not in scope)
+    - Decision: Extended fields will be user-provided in Phase 7 (Edit Place)
+  - Added extractPlaceNameFromUrl() function to extract place names from Google Maps URLs
+    - Parses /place/PlaceName/ format from URLs
+    - URL-decodes the name (+ → space, %20 → space, etc.)
+    - More accurate than geocoding for named places
+  - Extended PlaceInfo interface with optional fields:
+    - rating (number, 1-5 scale)
+    - openingHours (string, free-form text)
+    - website (string)
+    - phone (string)
+    - googleMapsUrl (string, original URL for tracking)
+    - urlExtractedName (string, name from URL parsing)
+  - Updated paste handler in Layout.tsx to:
+    - Extract place name from URL first (prioritized over geocoded name)
+    - Log comprehensive "[All Extracted Place Data]" object with all fields
+    - Handle partial data when geocoding fails but URL has name
+  - Updated maps.test-urls.md with place name extraction test cases
+  - Build passes successfully
+- [x] 4.6 Add to Collection Modal (UI) - src/components/AddPlaceModal.tsx
+  - Created AddPlaceModal component with:
+    - Place info card showing name, address, coordinates, and "View on Maps" link
+    - Warm gradient card design (amber-50 to orange-50) matching app aesthetic
+    - Collection dropdown selector with:
+      - Fetches collections from database on modal open
+      - Shows collection color/icon badge
+      - Dropdown with selection state and checkmark
+      - Handles empty state (no collections yet)
+      - Handles loading state
+    - Save and Cancel action buttons
+  - ExtractedPlace interface defined for type-safe place data
+  - Integrated with Layout.tsx:
+    - Added isAddPlaceOpen, extractedPlace, isAddingPlace state
+    - Paste handler now opens modal with extracted place data
+    - handleSavePlace and handleCloseAddPlace handlers (save logic TODO in Phase 4.7)
+  - Build passes successfully
+- [x] 4.7 Save Place to Database - src/app/actions/places.ts
+  - Created createPlace() server action to insert into places table
+  - Created getPlaces() to fetch all non-deleted places
+  - Created getPlacesByCollection() to fetch places for a collection
+  - Place interface matches database schema (id, collection_id, name, address, lat, lng, etc.)
+  - Uses getOrCreateDefaultCollection() if no collection specified
+  - Integrated with Layout.tsx handleSavePlace handler
+  - Console logs show "[Place Saved Successfully]" on save
+  - Build passes successfully
+- [x] 4.8 Success Feedback - src/components/Toast.tsx
+  - Created Toast component with success/error variants
+  - ToastContainer for managing multiple toasts
+  - Auto-dismiss after 4 seconds with manual dismiss option
+  - Animated entrance/exit transitions
+  - Success toast: green with checkmark icon
+  - Error toast: red with X icon
+  - Integrated with Layout.tsx via showToast() and dismissToast()
+  - Shows "Place added to your collection!" on successful save
+  - Build passes successfully
+- [x] 4.9 Error Handling - src/components/Layout.tsx
+  - Added error toasts for various failure scenarios:
+    - Geocoding failure with partial data: allows saving with warning
+    - Geocoding failure without name: shows error, suggests manual entry
+    - No coordinates in URL: suggests trying different link
+  - Non-Maps URLs are silently ignored (no spam on normal paste)
+  - Save failures show error toast with message
+  - Build passes successfully
 
 ### Phase 3: Collections (COMPLETE)
 - [x] 3.1 Color Palette - src/lib/colors.ts and src/components/ColorPicker.tsx
@@ -254,6 +507,65 @@ Read this file at the start of each session to maintain context and avoid repeat
 ### 2026-01-21 (Phase 3.8)
 - Modified: src/app/actions/collections.ts (added getOrCreateDefaultCollection function)
 
+### 2026-01-21 (Phase 4.1)
+- Modified: src/components/Layout.tsx (added global paste event listener)
+
+### 2026-01-21 (Phase 4.2)
+- Created: src/lib/maps.ts (Google Maps URL detection utilities)
+- Created: src/lib/maps.test-urls.md (test cases documentation)
+- Modified: src/components/Layout.tsx (integrated Maps URL detection with paste listener)
+
+### 2026-01-21 (Phase 4.3)
+- Modified: src/lib/maps.ts (added coordinate extraction functions)
+- Modified: src/lib/maps.test-urls.md (added coordinate extraction test cases)
+- Modified: src/components/Layout.tsx (integrated coordinate extraction with paste handler)
+
+### 2026-01-21 (Phase 4.4)
+- Created: src/lib/geocoding.ts (reverse and forward geocoding with Nominatim API)
+- Created: src/lib/geocoding.test-examples.md (test cases documentation)
+- Modified: src/components/Layout.tsx (integrated reverse geocoding with paste handler)
+
+### 2026-01-21 (Phase 4.5)
+- Modified: src/lib/maps.ts (added extractPlaceNameFromUrl function)
+- Modified: src/lib/geocoding.ts (extended PlaceInfo interface with optional fields)
+- Modified: src/components/Layout.tsx (integrated place name extraction, comprehensive logging)
+- Modified: src/lib/maps.test-urls.md (added place name extraction test cases)
+
+### 2026-01-21 (Phase 4.6)
+- Created: src/components/AddPlaceModal.tsx (modal for adding places from paste)
+- Modified: src/components/Layout.tsx (integrated AddPlaceModal with paste handler)
+
+### 2026-01-21 (Phase 4.7)
+- Created: src/app/actions/places.ts (server actions for places CRUD)
+- Modified: src/components/Layout.tsx (integrated createPlace with save handler)
+
+### 2026-01-21 (Phase 4.8)
+- Created: src/components/Toast.tsx (toast notification system)
+- Modified: src/components/Layout.tsx (integrated toast notifications)
+
+### 2026-01-21 (Phase 4.9)
+- Modified: src/components/Layout.tsx (added error handling with toast feedback)
+
+### 2026-01-21 (Phase 5.1-5.6)
+- Modified: src/app/actions/places.ts (added getPlacesWithCollections, PlaceWithCollection interface)
+- Created: src/components/MapMarker.tsx (custom colored pin with icon)
+- Modified: src/components/Map.tsx (accepts places, renders markers, fits bounds, handles clicks)
+- Modified: src/app/page.tsx (client component, fetches places, passes to Map)
+- Modified: src/components/Layout.tsx (added onPlaceAdded callback prop)
+
+### 2026-01-21 (Phase 6.1-6.10)
+- Created: src/components/PlaceDetailsPanel.tsx (responsive place details panel)
+- Modified: src/app/page.tsx (added panel state, marker click opens panel)
+
+### 2026-01-21 (Phase 7.1-7.11)
+- Modified: src/app/actions/places.ts (added updatePlace, softDeletePlace, restorePlace, permanentlyDeletePlace, tag functions)
+- Created: src/components/TagInput.tsx (tag input with chips)
+- Created: src/components/EditPlaceModal.tsx (edit place modal with tags and collection dropdown)
+- Modified: src/components/PlaceDetailsPanel.tsx (added edit button, tags display, Tag type import)
+- Modified: src/app/page.tsx (integrated EditPlaceModal, tags fetching)
+- Created: src/app/trash/page.tsx (trash view with restore/delete)
+- Modified: src/components/Layout.tsx (added Trash button)
+
 ---
 
 ## Learnings
@@ -279,9 +591,11 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Next Steps (from roadmap.md)
 
-1. Phase 4.1: Paste Listener
-2. Phase 4.2: Google Maps URL Detection
-3. Phase 4.3: Extract Coordinates from URL
-4. Phase 4.4: Place Data Extraction - Basic
+1. Phase 8.1: Edit Collection UI
+2. Phase 8.2: Save Collection Edits
+3. Phase 8.3: Delete Collection UI
+4. Phase 8.4: Delete Collection Logic
+5. Phase 8.5: Focus on Collection
+6. Phase 8.6: Place Count
 
 Reference: docs/roadmap.md for full task breakdown

@@ -1,10 +1,10 @@
-# Matchbox
+# Matchbook
 
 A personal place-saving app that makes it effortless to collect and organize locations you want to visit.
 
 ## How it works
 
-Paste a Google Maps link (or share it directly from the Google Maps app on Android) and Matchbox automatically extracts the place details—name, address, rating, hours, and more. No typing, no forms, just paste and save.
+Paste a Google Maps link (or share it directly from the Google Maps app on Android) and Matchbook automatically extracts the place details—name, address, rating, hours, and more. No typing, no forms, just paste and save.
 
 ## Features
 

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Matchbox",
+  title: "Matchbook",
   description: "Collect and organize places to visit",
 };
 

@@ -1,4 +1,4 @@
-# Matchbox Development Roadmap
+# Matchbook Development Roadmap
 
 This roadmap sequences the build in small, testable steps. Each step should be completable and verifiable before moving to the next. This supports a "vibe coding" approach where we build incrementally and catch bugs early.
 
@@ -187,202 +187,202 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 ## Phase 4: Add Place via Paste
 
 ### 4.1 Paste Listener
-- [ ] Add global paste event listener
-- [ ] Log pasted text to console
-- [ ] **Test**: Paste anything, see it in console
+- [x] Add global paste event listener
+- [x] Log pasted text to console
+- [x] **Test**: Paste anything, see it in console
 
 ### 4.2 Google Maps URL Detection
-- [ ] Create regex/function to detect Google Maps URLs
-- [ ] Handle various formats (maps.google.com, goo.gl/maps, etc.)
-- [ ] **Test**: Paste Maps URL → detected; paste other text → ignored
+- [x] Create regex/function to detect Google Maps URLs
+- [x] Handle various formats (maps.google.com, goo.gl/maps, etc.)
+- [x] **Test**: Paste Maps URL → detected; paste other text → ignored
 
 ### 4.3 Extract Coordinates from URL
-- [ ] Parse coordinates from Google Maps URL
-- [ ] Handle different URL formats
-- [ ] **Test**: Extract lat/lng from various Maps URLs
+- [x] Parse coordinates from Google Maps URL
+- [x] Handle different URL formats
+- [x] **Test**: Extract lat/lng from various Maps URLs
 
 ### 4.4 Place Data Extraction - Basic
-- [ ] Use coordinates to reverse geocode (free service like Nominatim)
-- [ ] Get: name (if available), address
-- [ ] **Test**: Paste URL → get basic place info in console
+- [x] Use coordinates to reverse geocode (free service like Nominatim)
+- [x] Get: name (if available), address
+- [x] **Test**: Paste URL → get basic place info in console
 
 ### 4.5 Place Data Extraction - Extended
-- [ ] Research free methods for rating, hours, website, phone
-- [ ] Implement what's feasible (may be limited without Google API)
-- [ ] **Test**: Log all extracted data
+- [x] Research free methods for rating, hours, website, phone
+- [x] Implement what's feasible (may be limited without Google API)
+- [x] **Test**: Log all extracted data
 
 ### 4.6 Add to Collection Modal - UI
-- [ ] Create modal that appears after paste detection
-- [ ] Show extracted place info (name, address)
-- [ ] Dropdown to select collection
-- [ ] Save and Cancel buttons
-- [ ] **Test**: Modal appears with place info after paste
+- [x] Create modal that appears after paste detection
+- [x] Show extracted place info (name, address)
+- [x] Dropdown to select collection
+- [x] Save and Cancel buttons
+- [x] **Test**: Modal appears with place info after paste
 
 ### 4.7 Save Place to Database
-- [ ] On save, insert place into `places` table
-- [ ] Link to selected collection
-- [ ] Close modal on success
-- [ ] **Test**: Place appears in Supabase dashboard
+- [x] On save, insert place into `places` table
+- [x] Link to selected collection
+- [x] Close modal on success
+- [x] **Test**: Place appears in Supabase dashboard
 
 ### 4.8 Success Feedback
-- [ ] Show toast/notification on successful save
-- [ ] **Test**: See confirmation after saving
+- [x] Show toast/notification on successful save
+- [x] **Test**: See confirmation after saving
 
 ### 4.9 Error Handling
-- [ ] If URL parsing fails, show error message
-- [ ] Offer "Add manually" option (link to manual entry - built later)
-- [ ] **Test**: Paste invalid URL → see friendly error
+- [x] If URL parsing fails, show error message
+- [x] Offer "Add manually" option (link to manual entry - built later)
+- [x] **Test**: Paste invalid URL → see friendly error
 
 ---
 
 ## Phase 5: Display Places on Map
 
 ### 5.1 Fetch Places
-- [ ] Create function to fetch all places (exclude deleted)
-- [ ] Include collection data (for color/icon)
-- [ ] **Test**: Console log shows places with collection info
+- [x] Create function to fetch all places (exclude deleted)
+- [x] Include collection data (for color/icon)
+- [x] **Test**: Console log shows places with collection info
 
 ### 5.2 Basic Markers
-- [ ] Render places as default markers on map
-- [ ] Position at lat/lng coordinates
-- [ ] **Test**: See markers on map for saved places
+- [x] Render places as default markers on map
+- [x] Position at lat/lng coordinates
+- [x] **Test**: See markers on map for saved places
 
 ### 5.3 Custom Pin Color
-- [ ] Create custom marker component
-- [ ] Use collection color for marker
-- [ ] **Test**: Markers show in collection colors
+- [x] Create custom marker component
+- [x] Use collection color for marker
+- [x] **Test**: Markers show in collection colors
 
 ### 5.4 Pin Icons
-- [ ] Add collection icon inside/beside marker
-- [ ] **Test**: Markers show icon
+- [x] Add collection icon inside/beside marker
+- [x] **Test**: Markers show icon
 
 ### 5.5 Zoom to Fit All
-- [ ] Calculate bounds of all places
-- [ ] Fit map view to show all markers
-- [ ] Use as default view (instead of London) when places exist
-- [ ] **Test**: Map zooms to show all saved places
+- [x] Calculate bounds of all places
+- [x] Fit map view to show all markers
+- [x] Use as default view (instead of London) when places exist
+- [x] **Test**: Map zooms to show all saved places
 
 ### 5.6 Click Handler
-- [ ] Add click handler to markers
-- [ ] Log clicked place ID to console
-- [ ] **Test**: Click marker → see place ID in console
+- [x] Add click handler to markers
+- [x] Log clicked place ID to console
+- [x] **Test**: Click marker → see place ID in console
 
 ---
 
 ## Phase 6: Place Details Panel
 
 ### 6.1 Panel Component - Mobile
-- [ ] Create slide-up panel component
-- [ ] Animate from bottom of screen
-- [ ] Close on swipe down or X button
-- [ ] **Test**: Panel slides up and down
+- [x] Create slide-up panel component
+- [x] Animate from bottom of screen
+- [x] Close on swipe down or X button
+- [x] **Test**: Panel slides up and down
 
 ### 6.2 Panel Component - Desktop
-- [ ] Create side panel component
-- [ ] Fixed on right side of map
-- [ ] Close on X button
-- [ ] **Test**: Panel appears on right
+- [x] Create side panel component
+- [x] Fixed on right side of map
+- [x] Close on X button
+- [x] **Test**: Panel appears on right
 
 ### 6.3 Responsive Panel
-- [ ] Use mobile panel on small screens
-- [ ] Use side panel on large screens
-- [ ] **Test**: Resize browser, correct panel type shows
+- [x] Use mobile panel on small screens
+- [x] Use side panel on large screens
+- [x] **Test**: Resize browser, correct panel type shows
 
 ### 6.4 Wire Up Panel
-- [ ] Click marker → open panel with that place's data
-- [ ] **Test**: Click marker → panel opens with place info
+- [x] Click marker → open panel with that place's data
+- [x] **Test**: Click marker → panel opens with place info
 
 ### 6.5 Display Basic Info
-- [ ] Show: name, address
-- [ ] **Test**: Name and address visible in panel
+- [x] Show: name, address
+- [x] **Test**: Name and address visible in panel
 
 ### 6.6 Display Extended Info
-- [ ] Show: rating, hours, website, phone (if available)
-- [ ] Handle missing data gracefully
-- [ ] **Test**: Extended info shows when available
+- [x] Show: rating, hours, website, phone (if available)
+- [x] Handle missing data gracefully
+- [x] **Test**: Extended info shows when available
 
 ### 6.7 Collection Link
-- [ ] Show collection name
-- [ ] Make it clickable (action: filter map to that collection - implement later)
-- [ ] Style as link
-- [ ] **Test**: Collection name visible, looks clickable
+- [x] Show collection name
+- [x] Make it clickable (action: filter map to that collection - implement later)
+- [x] Style as link
+- [x] **Test**: Collection name visible, looks clickable
 
 ### 6.8 Copy Address Button
-- [ ] Add "Copy" button next to address
-- [ ] Copy address to clipboard on click
-- [ ] Show feedback (toast or button text change)
-- [ ] **Test**: Click copy → address in clipboard
+- [x] Add "Copy" button next to address
+- [x] Copy address to clipboard on click
+- [x] Show feedback (toast or button text change)
+- [x] **Test**: Click copy → address in clipboard
 
 ### 6.9 Navigation Button
-- [ ] Add "Navigate" button
-- [ ] Open Google Maps directions in new tab
-- [ ] **Test**: Click → opens Google Maps with directions
+- [x] Add "Navigate" button
+- [x] Open Google Maps directions in new tab
+- [x] **Test**: Click → opens Google Maps with directions
 
 ### 6.10 Google Maps Link
-- [ ] Add "View on Google Maps" link
-- [ ] Opens original Google Maps URL
-- [ ] **Test**: Link works
+- [x] Add "View on Google Maps" link
+- [x] Opens original Google Maps URL
+- [x] **Test**: Link works
 
 ---
 
 ## Phase 7: Edit & Delete Places
 
 ### 7.1 Edit Modal - UI
-- [ ] Create edit place modal
-- [ ] Pre-fill: name, notes
-- [ ] **Test**: Modal opens with current values
+- [x] Create edit place modal
+- [x] Pre-fill: name, notes
+- [x] **Test**: Modal opens with current values
 
 ### 7.2 Edit Name & Notes
-- [ ] Save updated name and notes to database
-- [ ] Close modal, refresh data
-- [ ] **Test**: Edit saved, panel shows updated info
+- [x] Save updated name and notes to database
+- [x] Close modal, refresh data
+- [x] **Test**: Edit saved, panel shows updated info
 
 ### 7.3 Tag Input Component
-- [ ] Create tag input (type to add, click X to remove)
-- [ ] Show existing tags as chips
-- [ ] **Test**: Can add/remove tags in UI
+- [x] Create tag input (type to add, click X to remove)
+- [x] Show existing tags as chips
+- [x] **Test**: Can add/remove tags in UI
 
 ### 7.4 Save Tags
-- [ ] On save, create new tags if needed
-- [ ] Update place_tags junction table
-- [ ] **Test**: Tags saved to database
+- [x] On save, create new tags if needed
+- [x] Update place_tags junction table
+- [x] **Test**: Tags saved to database
 
 ### 7.5 Display Tags in Panel
-- [ ] Show tags in place details panel
-- [ ] Style as clickable chips
-- [ ] (Click action - filter by tag - implement later)
-- [ ] **Test**: Tags visible in panel
+- [x] Show tags in place details panel
+- [x] Style as clickable chips
+- [x] (Click action - filter by tag - implement later)
+- [x] **Test**: Tags visible in panel
 
 ### 7.6 Change Collection
-- [ ] Add collection dropdown to edit modal
-- [ ] Save collection change to database
-- [ ] **Test**: Move place to different collection
+- [x] Add collection dropdown to edit modal
+- [x] Save collection change to database
+- [x] **Test**: Move place to different collection
 
 ### 7.7 Delete Button
-- [ ] Add delete button to panel or edit modal
-- [ ] Confirmation dialog
-- [ ] **Test**: Delete button shows, confirmation appears
+- [x] Add delete button to panel or edit modal
+- [x] Confirmation dialog
+- [x] **Test**: Delete button shows, confirmation appears
 
 ### 7.8 Soft Delete
-- [ ] On delete, set `deleted_at` timestamp (don't actually delete)
-- [ ] Exclude deleted places from normal queries
-- [ ] **Test**: Deleted place disappears from map/list
+- [x] On delete, set `deleted_at` timestamp (don't actually delete)
+- [x] Exclude deleted places from normal queries
+- [x] **Test**: Deleted place disappears from map/list
 
 ### 7.9 Trash View - Basic
-- [ ] Create `/trash` page
-- [ ] List deleted places
-- [ ] **Test**: See deleted places in trash
+- [x] Create `/trash` page
+- [x] List deleted places
+- [x] **Test**: See deleted places in trash
 
 ### 7.10 Restore from Trash
-- [ ] Add restore button to trash items
-- [ ] Clear `deleted_at` to restore
-- [ ] **Test**: Restored place reappears on map
+- [x] Add restore button to trash items
+- [x] Clear `deleted_at` to restore
+- [x] **Test**: Restored place reappears on map
 
 ### 7.11 Permanent Delete
-- [ ] Add permanent delete button in trash
-- [ ] Confirmation dialog
-- [ ] Actually delete from database
-- [ ] **Test**: Permanently deleted place gone from trash
+- [x] Add permanent delete button in trash
+- [x] Confirmation dialog
+- [x] Actually delete from database
+- [x] **Test**: Permanently deleted place gone from trash
 
 ---
 
@@ -615,7 +615,7 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 ### 15.6 Share Target - Handler
 - [ ] Create handler for received shared links
 - [ ] Trigger add place flow
-- [ ] **Test**: Share from Google Maps → Matchbox opens with link
+- [ ] **Test**: Share from Google Maps → Matchbook opens with link
 
 ### 15.7 Paste Button (Mobile)
 - [ ] Add visible paste button on mobile

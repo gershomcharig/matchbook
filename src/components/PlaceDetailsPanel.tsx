@@ -1,0 +1,325 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import {
+  X,
+  Copy,
+  Check,
+  Navigation,
+  ExternalLink,
+  Star,
+  Clock,
+  Globe,
+  Phone,
+  MapPin,
+  Pencil,
+  Tag,
+} from 'lucide-react';
+import { type PlaceWithCollection, type Tag as TagType } from '@/app/actions/places';
+import { findIconByName } from '@/lib/icons';
+
+interface PlaceDetailsPanelProps {
+  /** The place to display */
+  place: PlaceWithCollection | null;
+  /** Tags for this place */
+  tags?: TagType[];
+  /** Whether the panel is open */
+  isOpen: boolean;
+  /** Callback when panel should close */
+  onClose: () => void;
+  /** Callback when collection name is clicked */
+  onCollectionClick?: (collectionId: string) => void;
+  /** Callback when tag is clicked */
+  onTagClick?: (tagName: string) => void;
+  /** Callback when edit button is clicked */
+  onEdit?: () => void;
+}
+
+export default function PlaceDetailsPanel({
+  place,
+  tags = [],
+  isOpen,
+  onClose,
+  onCollectionClick,
+  onTagClick,
+  onEdit,
+}: PlaceDetailsPanelProps) {
+  const [copied, setCopied] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check screen size for responsive behavior
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Reset copied state when place changes
+  useEffect(() => {
+    setCopied(false);
+  }, [place?.id]);
+
+  // Handle copy address
+  const handleCopyAddress = useCallback(async () => {
+    if (!place?.address) return;
+    try {
+      await navigator.clipboard.writeText(place.address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy address:', err);
+    }
+  }, [place?.address]);
+
+  // Handle navigate (open Google Maps directions)
+  const handleNavigate = useCallback(() => {
+    if (!place?.lat || !place?.lng) return;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, [place?.lat, place?.lng]);
+
+  // Handle view on Google Maps
+  const handleViewOnMaps = useCallback(() => {
+    if (place?.google_maps_url) {
+      window.open(place.google_maps_url, '_blank', 'noopener,noreferrer');
+    } else if (place?.lat && place?.lng) {
+      const url = `https://www.google.com/maps?q=${place.lat},${place.lng}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  }, [place?.google_maps_url, place?.lat, place?.lng]);
+
+  // Handle collection click
+  const handleCollectionClick = useCallback(() => {
+    if (place?.collection?.id && onCollectionClick) {
+      onCollectionClick(place.collection.id);
+    }
+  }, [place?.collection?.id, onCollectionClick]);
+
+  if (!place) return null;
+
+  // Get collection icon
+  const collectionIconData = place.collection ? findIconByName(place.collection.icon) : null;
+  const CollectionIcon = collectionIconData?.icon;
+
+  // Panel content (shared between mobile and desktop)
+  const panelContent = (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-start justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex-1 min-w-0 pr-4">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+            {place.name}
+          </h2>
+          {/* Collection badge */}
+          {place.collection && (
+            <button
+              onClick={handleCollectionClick}
+              className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium transition-colors hover:opacity-80"
+              style={{
+                backgroundColor: `${place.collection.color}20`,
+                color: place.collection.color,
+              }}
+            >
+              {CollectionIcon && <CollectionIcon size={12} />}
+              {place.collection.name}
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+              aria-label="Edit place"
+            >
+              <Pencil size={18} />
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+            aria-label="Close panel"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Address with copy button */}
+        {place.address && (
+          <div className="flex items-start gap-3">
+            <MapPin size={18} className="text-zinc-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-zinc-600 dark:text-zinc-300 break-words">
+                {place.address}
+              </p>
+              <button
+                onClick={handleCopyAddress}
+                className="mt-1 inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+              >
+                {copied ? (
+                  <>
+                    <Check size={12} className="text-green-500" />
+                    <span className="text-green-600 dark:text-green-400">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={12} />
+                    <span>Copy address</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Rating */}
+        {place.rating !== null && place.rating !== undefined && (
+          <div className="flex items-center gap-3">
+            <Star size={18} className="text-amber-500 fill-amber-500 flex-shrink-0" />
+            <span className="text-sm text-zinc-600 dark:text-zinc-300">
+              {place.rating.toFixed(1)} rating
+            </span>
+          </div>
+        )}
+
+        {/* Opening hours */}
+        {place.opening_hours && Object.keys(place.opening_hours).length > 0 && (
+          <div className="flex items-start gap-3">
+            <Clock size={18} className="text-zinc-400 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-zinc-600 dark:text-zinc-300">
+              {typeof place.opening_hours === 'string' ? (
+                <p>{place.opening_hours}</p>
+              ) : (
+                <p className="text-zinc-500 dark:text-zinc-400 italic">
+                  Hours available
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Website */}
+        {place.website && (
+          <div className="flex items-center gap-3">
+            <Globe size={18} className="text-zinc-400 flex-shrink-0" />
+            <a
+              href={place.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline truncate"
+            >
+              {new URL(place.website).hostname.replace('www.', '')}
+            </a>
+          </div>
+        )}
+
+        {/* Phone */}
+        {place.phone && (
+          <div className="flex items-center gap-3">
+            <Phone size={18} className="text-zinc-400 flex-shrink-0" />
+            <a
+              href={`tel:${place.phone}`}
+              className="text-sm text-zinc-600 hover:text-zinc-800 dark:text-zinc-300 dark:hover:text-zinc-100"
+            >
+              {place.phone}
+            </a>
+          </div>
+        )}
+
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div className="flex items-start gap-3">
+            <Tag size={18} className="text-zinc-400 mt-0.5 flex-shrink-0" />
+            <div className="flex flex-wrap gap-1.5">
+              {tags.map((tag) => (
+                <button
+                  key={tag.id}
+                  onClick={() => onTagClick?.(tag.name)}
+                  className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs font-medium hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors"
+                >
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Notes */}
+        {place.notes && (
+          <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+            <p className="text-sm text-zinc-600 dark:text-zinc-300 whitespace-pre-wrap">
+              {place.notes}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer actions */}
+      <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
+        {/* Navigate button */}
+        <button
+          onClick={handleNavigate}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:from-amber-400 hover:to-orange-400 transition-all"
+        >
+          <Navigation size={18} />
+          <span>Get Directions</span>
+        </button>
+
+        {/* View on Google Maps link */}
+        <button
+          onClick={handleViewOnMaps}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium transition-colors"
+        >
+          <ExternalLink size={16} />
+          <span>View on Google Maps</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  // Mobile: Slide-up panel
+  if (isMobile) {
+    return (
+      <div
+        className={`fixed inset-0 z-50 transition-opacity duration-200 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+          onClick={onClose}
+        />
+
+        {/* Panel */}
+        <div
+          className={`absolute bottom-0 left-0 right-0 max-h-[85vh] bg-white dark:bg-zinc-900 rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out ${
+            isOpen ? 'translate-y-0' : 'translate-y-full'
+          }`}
+        >
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+          </div>
+
+          {panelContent}
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop: Side panel (overlays the collections sidebar)
+  return (
+    <div
+      className={`fixed top-0 right-0 h-full w-[380px] bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-xl z-40 transform transition-transform duration-300 ease-out ${
+        isOpen ? 'translate-x-0' : 'translate-x-full'
+      }`}
+    >
+      {panelContent}
+    </div>
+  );
+}

@@ -1,7 +1,7 @@
-# Matchbox - Project Context
+# Matchbook - Project Context
 
 ## Overview
-Matchbox is a personal web app for collecting and organizing places to visit. Key differentiators: ease of use (paste Google Maps links to add), deep customization (colored pins, icons), and export capabilities.
+Matchbook is a personal web app for collecting and organizing places to visit. Key differentiators: ease of use (paste Google Maps links to add), deep customization (colored pins, icons), and export capabilities.
 
 ## Tech Stack
 - **Frontend**: Next.js (React framework) with App Router
@@ -72,7 +72,7 @@ When asked to work on the next task or continue development:
 ## Key Architecture Decisions
 - **Mobile-first responsive design** with minimal/clean aesthetic
 - **No visible branding** - functional UI only
-- **PWA for share sheet** - Android users can share from Google Maps directly to Matchbox
+- **PWA for share sheet** - Android users can share from Google Maps directly to Matchbook
 - **Simple password protection** (not full auth) - single password, persistent session
 - **Online only** - no offline support needed
 - **Soft delete** - 30-day trash for deleted places
