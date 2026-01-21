@@ -8,7 +8,7 @@ Read this file at the start of each session to maintain context and avoid repeat
 ## Current Status
 **Last Updated**: 2026-01-21
 **Current Phase**: Phase 3 IN PROGRESS
-**Next Step**: Phase 3.4 - Create Collection UI
+**Next Step**: Phase 3.5 - Create Collection Save
 
 ---
 
@@ -33,6 +33,12 @@ Read this file at the start of each session to maintain context and avoid repeat
   - Selection state with checkmark badge
   - Supports custom accent color via prop
   - Icons grouped by category with headers
+- [x] 3.4 Create Collection UI - src/components/Modal.tsx, src/components/NewCollectionModal.tsx
+  - Reusable Modal component with backdrop, close-on-escape, accessibility
+  - NewCollectionModal with name input, ColorPicker, IconPicker
+  - Live preview of collection (color + icon + name)
+  - Form validation (name required)
+  - Submit/Cancel buttons with loading state
 
 ### Phase 0: Project Setup (COMPLETE)
 - [x] 0.1 Initialize Next.js with App Router (commit: 1b205b7)
@@ -213,6 +219,10 @@ Read this file at the start of each session to maintain context and avoid repeat
 ### 2026-01-21 (Phase 3.3)
 - Created: src/components/IconPicker.tsx (scrollable icon grid with search and filtering)
 
+### 2026-01-21 (Phase 3.4)
+- Created: src/components/Modal.tsx (reusable modal/dialog component)
+- Created: src/components/NewCollectionModal.tsx (collection creation form)
+
 ---
 
 ## Learnings
@@ -238,10 +248,10 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Next Steps (from roadmap.md)
 
-1. Phase 3.4: Create Collection - UI (modal/dialog)
-2. Phase 3.5: Create Collection - Save to database
-3. Phase 3.4: Create Collection - UI (modal/dialog)
-4. Phase 3.5: Create Collection - Save to database
+1. Phase 3.5: Create Collection - Save to database
+2. Phase 3.6: Fetch Collections
+3. Phase 3.7: Display Collections
+4. Phase 3.8: Default Collection
 5. Phase 3.6-3.8: Fetch, display collections, default collection
 
 Reference: docs/roadmap.md for full task breakdown

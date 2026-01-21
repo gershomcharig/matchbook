@@ -158,10 +158,10 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 - [x] **Test**: Icon picker renders, selection works
 
 ### 3.4 Create Collection - UI
-- [ ] Create "New Collection" modal/dialog
-- [ ] Form: name input, color picker, icon picker
-- [ ] Submit button
-- [ ] **Test**: Modal opens, form works (no save yet)
+- [x] Create "New Collection" modal/dialog
+- [x] Form: name input, color picker, icon picker
+- [x] Submit button
+- [x] **Test**: Modal opens, form works (no save yet)
 
 ### 3.5 Create Collection - Save
 - [ ] On submit, insert into `collections` table
