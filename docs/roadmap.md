@@ -173,9 +173,9 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 - [x] **Test**: Console log shows collections from database
 
 ### 3.7 Display Collections
-- [ ] Create simple collections list component
-- [ ] Show name, color swatch, icon for each
-- [ ] **Test**: Collections visible in UI
+- [x] Create simple collections list component
+- [x] Show name, color swatch, icon for each
+- [x] **Test**: Collections visible in UI
 
 ### 3.8 Default Collection
 - [ ] On first place add (later), auto-create "My Places" if no collections exist

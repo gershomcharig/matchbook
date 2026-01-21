@@ -8,7 +8,7 @@ Read this file at the start of each session to maintain context and avoid repeat
 ## Current Status
 **Last Updated**: 2026-01-21
 **Current Phase**: Phase 3 IN PROGRESS
-**Next Step**: Phase 3.7 - Display Collections
+**Next Step**: Phase 3.8 - Default Collection
 
 ---
 
@@ -47,6 +47,13 @@ Read this file at the start of each session to maintain context and avoid repeat
 - [x] 3.6 Fetch Collections - src/app/actions/collections.ts
   - Server action getCollections() fetches all collections
   - Orders by created_at descending (newest first)
+- [x] 3.7 Display Collections - src/components/CollectionsList.tsx
+  - Desktop: Always-visible sidebar (320px) with collections list
+  - Mobile: Collections button opens slide-up panel
+  - Shows name, color swatch with icon for each collection
+  - Selection state highlighting
+  - Empty state with "Create your first collection" prompt
+  - Auto-refreshes when new collection is created
 
 ### Phase 0: Project Setup (COMPLETE)
 - [x] 0.1 Initialize Next.js with App Router (commit: 1b205b7)
@@ -235,6 +242,10 @@ Read this file at the start of each session to maintain context and avoid repeat
 - Created: src/app/actions/collections.ts (server actions for collections CRUD)
 - Modified: src/components/Layout.tsx (added New Collection button and modal integration)
 
+### 2026-01-21 (Phase 3.7)
+- Created: src/components/CollectionsList.tsx (collections sidebar with mobile panel)
+- Modified: src/components/Layout.tsx (integrated CollectionsList with desktop sidebar and mobile slide-up)
+
 ---
 
 ## Learnings
@@ -260,9 +271,9 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Next Steps (from roadmap.md)
 
-1. Phase 3.7: Display Collections
-2. Phase 3.8: Default Collection
-3. Phase 4.1: Paste Listener
-4. Phase 4.2: Google Maps URL Detection
+1. Phase 3.8: Default Collection
+2. Phase 4.1: Paste Listener
+3. Phase 4.2: Google Maps URL Detection
+4. Phase 4.3: Extract Coordinates from URL
 
 Reference: docs/roadmap.md for full task breakdown
