@@ -7,8 +7,8 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Current Status
 **Last Updated**: 2026-01-21
-**Current Phase**: Phase 1 Complete, Ready for Phase 2
-**Next Step**: Phase 2.1 - Password Setup Screen
+**Current Phase**: Phase 2 In Progress
+**Next Step**: Phase 2.5 - Password Verification
 
 ---
 
@@ -33,6 +33,31 @@ Read this file at the start of each session to maintain context and avoid repeat
 - [x] 1.3 Map styling - using mapbox://styles/mapbox/light-v11, fills viewport
 - [x] 1.4 Responsive layout shell - components/Layout.tsx with flex layout
 - [x] 1.5 Empty state overlay - components/EmptyState.tsx with prompt message
+
+### Phase 2: Password Protection (IN PROGRESS)
+- [x] 2.1 Password Setup Screen - src/app/setup/page.tsx
+  - Form with password and confirm password inputs
+  - Show/hide password toggle using lucide-react icons
+  - Validation: minimum 8 characters, passwords must match
+  - Glass-morphism design with amber accent color
+  - Installed lucide-react package
+- [x] 2.2 Password Hashing - src/lib/auth.ts
+  - Using Web Crypto API with PBKDF2 (no external dependencies)
+  - 100,000 iterations, SHA-256 hash, 256-bit key
+  - Random 16-byte salt per password
+  - Hash format: salt:hash (hex encoded)
+  - Constant-time comparison to prevent timing attacks
+  - Functions: hashPassword(), verifyPassword()
+- [x] 2.3 Store Password Hash - src/app/setup/actions.ts
+  - Server action setupPassword() hashes and saves to settings table
+  - Server action isPasswordSet() checks if password exists
+  - Setup form connected to server action with error handling
+  - Redirects to main page on success
+- [x] 2.4 Password Entry Screen - src/app/login/page.tsx
+  - Login form with password input and submit button
+  - Show/hide password toggle
+  - Error display for failed login attempts
+  - Matches setup page design aesthetic
 
 ---
 
@@ -93,9 +118,29 @@ Read this file at the start of each session to maintain context and avoid repeat
 - Modified: src/app/page.tsx (uses Layout, Map, EmptyState)
 - Modified: src/app/layout.tsx (updated title and description)
 
+### 2026-01-21 (Phase 2.1)
+- Created: src/app/setup/page.tsx (password setup form)
+- Modified: package.json (added lucide-react)
+
+### 2026-01-21 (Phase 2.2)
+- Created: src/lib/auth.ts (password hashing utilities)
+
+### 2026-01-21 (Phase 2.3)
+- Created: src/app/setup/actions.ts (server actions for password setup)
+- Modified: src/app/setup/page.tsx (connected to server action)
+
+### 2026-01-21 (Phase 2.4)
+- Created: src/app/login/page.tsx (login form)
+
 ---
 
 ## Learnings
+
+### Web Crypto API for Password Hashing
+- PBKDF2 is available natively in browsers and Node.js via Web Crypto API
+- No need for external packages like bcrypt
+- Use salt.buffer as ArrayBuffer when passing to crypto.subtle.deriveBits()
+- TypeScript strict mode requires explicit type casting for ArrayBuffer
 
 ### react-map-gl v8 Breaking Changes
 - v8 uses ES module subpath exports
@@ -112,10 +157,10 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Next Steps (from roadmap.md)
 
-1. Phase 2.1: Create /setup page with password form
-2. Phase 2.2: Implement password hashing
-3. Phase 2.3: Store password hash in settings table
-4. Phase 2.4: Create /login page
-5. Phase 2.5: Password verification logic
+1. Phase 2.5: Password verification logic
+2. Phase 2.6: Session token management
+3. Phase 2.7: Auth state check
+4. Phase 2.8: Route protection
+5. Phase 2.9: Logout functionality
 
 Reference: docs/roadmap.md for full task breakdown

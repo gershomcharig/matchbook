@@ -89,25 +89,25 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 ## Phase 2: Password Protection
 
 ### 2.1 Password Setup Screen
-- [ ] Create `/setup` page
-- [ ] Form: password input, confirm password, submit button
-- [ ] Basic validation (passwords match, minimum length)
-- [ ] **Test**: Form renders and validates
+- [x] Create `/setup` page
+- [x] Form: password input, confirm password, submit button
+- [x] Basic validation (passwords match, minimum length)
+- [x] **Test**: Form renders and validates
 
 ### 2.2 Password Hashing
-- [ ] Install bcrypt (or use Web Crypto API)
-- [ ] Create utility function to hash password
-- [ ] **Test**: Hash a test password, verify output
+- [x] Install bcrypt (or use Web Crypto API)
+- [x] Create utility function to hash password
+- [x] **Test**: Hash a test password, verify output
 
 ### 2.3 Store Password Hash
-- [ ] On setup submit, hash password
-- [ ] Save hash to `settings` table (key: 'password_hash')
-- [ ] **Test**: Check Supabase dashboard for stored hash
+- [x] On setup submit, hash password
+- [x] Save hash to `settings` table (key: 'password_hash')
+- [x] **Test**: Check Supabase dashboard for stored hash
 
 ### 2.4 Password Entry Screen
-- [ ] Create `/login` page
-- [ ] Form: password input, submit button
-- [ ] **Test**: Form renders
+- [x] Create `/login` page
+- [x] Form: password input, submit button
+- [x] **Test**: Form renders
 
 ### 2.5 Password Verification
 - [ ] Fetch stored hash from `settings`
