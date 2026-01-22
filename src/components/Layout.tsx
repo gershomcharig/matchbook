@@ -7,9 +7,10 @@ import { clearSessionToken } from '@/lib/auth';
 import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl } from '@/lib/maps';
 import { reverseGeocode } from '@/lib/geocoding';
 import NewCollectionModal from './NewCollectionModal';
+import EditCollectionModal from './EditCollectionModal';
 import AddPlaceModal, { type ExtractedPlace } from './AddPlaceModal';
 import CollectionsList from './CollectionsList';
-import { createCollection, type Collection } from '@/app/actions/collections';
+import { createCollection, updateCollection, deleteCollection, getCollectionPlaceCounts, type Collection } from '@/app/actions/collections';
 import { createPlace } from '@/app/actions/places';
 import { ToastContainer, generateToastId, type ToastData } from './Toast';
 
@@ -19,15 +20,24 @@ interface LayoutProps {
   onCollectionSelected?: (collection: Collection) => void;
   /** Callback when a place is added */
   onPlaceAdded?: () => void;
+  /** Callback when focus on collection is requested */
+  onFocusCollection?: (collectionId: string) => void;
 }
 
-export default function Layout({ children, sidePanel, onCollectionSelected, onPlaceAdded }: LayoutProps) {
+export default function Layout({ children, sidePanel, onCollectionSelected, onPlaceAdded, onFocusCollection }: LayoutProps) {
   const router = useRouter();
   const [isNewCollectionOpen, setIsNewCollectionOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMobileCollectionsOpen, setIsMobileCollectionsOpen] = useState(false);
   const [collectionsRefreshTrigger, setCollectionsRefreshTrigger] = useState(0);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | undefined>();
+
+  // Edit Collection modal state
+  const [isEditCollectionOpen, setIsEditCollectionOpen] = useState(false);
+  const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
+  const [editingCollectionPlaceCount, setEditingCollectionPlaceCount] = useState(0);
+  const [isSavingCollection, setIsSavingCollection] = useState(false);
+  const [isDeletingCollection, setIsDeletingCollection] = useState(false);
 
   // Add Place modal state
   const [isAddPlaceOpen, setIsAddPlaceOpen] = useState(false);
@@ -86,6 +96,64 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
     setIsMobileCollectionsOpen(false);
     setIsNewCollectionOpen(true);
   };
+
+  // Handle opening edit collection modal
+  const handleEditCollection = useCallback(async (collection: Collection) => {
+    setEditingCollection(collection);
+    setIsMobileCollectionsOpen(false);
+
+    // Fetch place count for this collection
+    const result = await getCollectionPlaceCounts();
+    if (result.success && result.counts) {
+      setEditingCollectionPlaceCount(result.counts[collection.id] || 0);
+    } else {
+      setEditingCollectionPlaceCount(0);
+    }
+
+    setIsEditCollectionOpen(true);
+  }, []);
+
+  // Handle saving collection edits
+  const handleSaveCollection = async (data: { id: string; name: string; color: string; icon: string }) => {
+    setIsSavingCollection(true);
+    const result = await updateCollection(data);
+    setIsSavingCollection(false);
+
+    if (result.success) {
+      setIsEditCollectionOpen(false);
+      setEditingCollection(null);
+      setCollectionsRefreshTrigger((prev) => prev + 1);
+      showToast('success', `"${data.name}" updated successfully!`);
+      // Also refresh places since collection color/icon may have changed
+      onPlaceAdded?.();
+    } else {
+      showToast('error', result.error || 'Failed to update collection');
+    }
+  };
+
+  // Handle deleting a collection
+  const handleDeleteCollection = async (id: string) => {
+    setIsDeletingCollection(true);
+    const result = await deleteCollection(id);
+    setIsDeletingCollection(false);
+
+    if (result.success) {
+      setIsEditCollectionOpen(false);
+      setEditingCollection(null);
+      setCollectionsRefreshTrigger((prev) => prev + 1);
+      showToast('success', 'Collection deleted successfully');
+      // Refresh places since they may have moved to another collection
+      onPlaceAdded?.();
+    } else {
+      showToast('error', result.error || 'Failed to delete collection');
+    }
+  };
+
+  // Handle focus on collection (zoom map to its places)
+  const handleFocusCollection = useCallback((collection: Collection) => {
+    setIsMobileCollectionsOpen(false);
+    onFocusCollection?.(collection.id);
+  }, [onFocusCollection]);
 
   // Handle saving a place from the Add Place modal
   const handleSavePlace = async (data: { place: ExtractedPlace; collectionId: string }) => {
@@ -286,6 +354,21 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
         isSubmitting={isAddingPlace}
       />
 
+      {/* Edit Collection Modal */}
+      <EditCollectionModal
+        collection={editingCollection}
+        isOpen={isEditCollectionOpen}
+        onClose={() => {
+          setIsEditCollectionOpen(false);
+          setEditingCollection(null);
+        }}
+        onSave={handleSaveCollection}
+        onDelete={handleDeleteCollection}
+        isSaving={isSavingCollection}
+        isDeleting={isDeletingCollection}
+        placeCount={editingCollectionPlaceCount}
+      />
+
       {/* Mobile Collections Panel (slide-up) */}
       {isMobileCollectionsOpen && (
         <div className="lg:hidden fixed inset-0 z-50">
@@ -305,6 +388,8 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
               <CollectionsList
                 onNewCollection={handleOpenNewCollection}
                 onSelectCollection={handleSelectCollection}
+                onEditCollection={handleEditCollection}
+                onFocusCollection={handleFocusCollection}
                 selectedId={selectedCollectionId}
                 refreshTrigger={collectionsRefreshTrigger}
               />
@@ -319,6 +404,8 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
           <CollectionsList
             onNewCollection={() => setIsNewCollectionOpen(true)}
             onSelectCollection={handleSelectCollection}
+            onEditCollection={handleEditCollection}
+            onFocusCollection={handleFocusCollection}
             selectedId={selectedCollectionId}
             refreshTrigger={collectionsRefreshTrigger}
           />

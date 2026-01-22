@@ -23,9 +23,13 @@ interface MapProps {
   places?: PlaceWithCollection[];
   /** Callback when a marker is clicked */
   onMarkerClick?: (placeId: string) => void;
+  /** Collection ID to focus/zoom on */
+  focusCollectionId?: string | null;
+  /** Trigger counter to force re-focus on same collection */
+  focusTrigger?: number;
 }
 
-export default function Map({ places = [], onMarkerClick }: MapProps) {
+export default function Map({ places = [], onMarkerClick, focusCollectionId, focusTrigger }: MapProps) {
   const mapRef = useRef<MapRef>(null);
 
   // Handle marker click
@@ -37,12 +41,11 @@ export default function Map({ places = [], onMarkerClick }: MapProps) {
     [onMarkerClick]
   );
 
-  // Fit map to show all places when places change
-  useEffect(() => {
+  // Helper function to fit bounds to a set of places
+  const fitBoundsToPlaces = useCallback((placesToFit: PlaceWithCollection[]) => {
     if (!mapRef.current) return;
 
-    // Filter places with valid coordinates
-    const placesWithCoords = places.filter(
+    const placesWithCoords = placesToFit.filter(
       (p) => p.lat !== null && p.lng !== null
     );
 
@@ -85,7 +88,25 @@ export default function Map({ places = [], onMarkerClick }: MapProps) {
       duration: 1000,
       maxZoom: 16,
     });
-  }, [places]);
+  }, []);
+
+  // Fit map to show all places when places change
+  useEffect(() => {
+    fitBoundsToPlaces(places);
+  }, [places, fitBoundsToPlaces]);
+
+  // Focus on a specific collection when focusCollectionId or focusTrigger changes
+  useEffect(() => {
+    if (!focusCollectionId || !mapRef.current) return;
+
+    const collectionPlaces = places.filter(
+      (p) => p.collection_id === focusCollectionId
+    );
+
+    if (collectionPlaces.length > 0) {
+      fitBoundsToPlaces(collectionPlaces);
+    }
+  }, [focusCollectionId, focusTrigger, places, fitBoundsToPlaces]);
 
   return (
     <MapGL

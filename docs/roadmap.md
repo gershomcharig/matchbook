@@ -389,34 +389,34 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 ## Phase 8: Collections Management
 
 ### 8.1 Edit Collection - UI
-- [ ] Add edit button to collection in list
-- [ ] Open modal with current values (name, color, icon)
-- [ ] **Test**: Edit modal opens with current values
+- [x] Add edit button to collection in list
+- [x] Open modal with current values (name, color, icon)
+- [x] **Test**: Edit modal opens with current values
 
 ### 8.2 Save Collection Edits
-- [ ] Update collection in database
-- [ ] Refresh UI
-- [ ] **Test**: Changes reflected in collection list and pins
+- [x] Update collection in database
+- [x] Refresh UI
+- [x] **Test**: Changes reflected in collection list and pins
 
 ### 8.3 Delete Collection - UI
-- [ ] Add delete button
-- [ ] Confirmation dialog explaining what happens to places
-- [ ] **Test**: Confirmation appears
+- [x] Add delete button
+- [x] Confirmation dialog explaining what happens to places
+- [x] **Test**: Confirmation appears
 
 ### 8.4 Delete Collection - Logic
-- [ ] Option 1: Move places to default collection
-- [ ] Option 2: Delete places too
-- [ ] Implement chosen approach
-- [ ] **Test**: Collection deleted, places handled correctly
+- [x] Option 1: Move places to default collection
+- [x] Option 2: Delete places too
+- [x] Implement chosen approach
+- [x] **Test**: Collection deleted, places handled correctly
 
 ### 8.5 Focus on Collection
-- [ ] Add "Show on map" action to collection
-- [ ] Zoom map to fit all places in that collection
-- [ ] **Test**: Click → map zooms to collection's places
+- [x] Add "Show on map" action to collection
+- [x] Zoom map to fit all places in that collection
+- [x] **Test**: Click → map zooms to collection's places
 
 ### 8.6 Place Count
-- [ ] Show number of places next to each collection
-- [ ] **Test**: Counts accurate
+- [x] Show number of places next to each collection
+- [x] **Test**: Counts accurate
 
 ---
 

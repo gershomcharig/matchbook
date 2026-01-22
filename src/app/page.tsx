@@ -20,6 +20,8 @@ export default function Home() {
   const [selectedPlaceTags, setSelectedPlaceTags] = useState<Tag[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [focusCollectionId, setFocusCollectionId] = useState<string | null>(null);
+  const [focusTrigger, setFocusTrigger] = useState(0);
 
   // Fetch places on mount and when triggered
   const fetchPlaces = useCallback(async () => {
@@ -118,11 +120,22 @@ export default function Home() {
     handleClosePanel();
   }, [fetchPlaces, handleClosePanel]);
 
+  // Handle focus on collection (zoom map to its places)
+  const handleFocusCollection = useCallback((collectionId: string) => {
+    setFocusCollectionId(collectionId);
+    setFocusTrigger((prev) => prev + 1);
+  }, []);
+
   const hasPlaces = places.length > 0;
 
   return (
-    <Layout onPlaceAdded={fetchPlaces}>
-      <Map places={places} onMarkerClick={handleMarkerClick} />
+    <Layout onPlaceAdded={fetchPlaces} onFocusCollection={handleFocusCollection}>
+      <Map
+        places={places}
+        onMarkerClick={handleMarkerClick}
+        focusCollectionId={focusCollectionId}
+        focusTrigger={focusTrigger}
+      />
       {!isLoading && !hasPlaces && <EmptyState />}
 
       {/* Place Details Panel */}

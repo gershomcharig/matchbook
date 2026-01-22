@@ -6,13 +6,39 @@ Read this file at the start of each session to maintain context and avoid repeat
 ---
 
 ## Current Status
-**Last Updated**: 2026-01-21
-**Current Phase**: Phase 7 COMPLETE
-**Next Step**: Phase 8.1 - Edit Collection UI
+**Last Updated**: 2026-01-22
+**Current Phase**: Phase 8 COMPLETE
+**Next Step**: Phase 9.1 - Filter by Collection UI
 
 ---
 
 ## Completed Tasks
+
+### Phase 8: Collections Management (COMPLETE)
+- [x] 8.1 Edit Collection UI - src/components/EditCollectionModal.tsx
+  - Edit button (pencil icon) on each collection in CollectionsList
+  - Modal opens with pre-filled name, color, and icon values
+  - Live preview of collection appearance
+  - Uses existing ColorPicker and IconPicker components
+- [x] 8.2 Save Collection Edits - src/app/actions/collections.ts
+  - updateCollection() server action updates name, color, icon
+  - UI refreshes collections list and map pins after save
+  - Success toast notification
+- [x] 8.3-8.4 Delete Collection with Confirmation
+  - "Delete this collection" link in edit modal
+  - Confirmation dialog shows place count and explains behavior
+  - Places moved to default (oldest) collection on delete
+  - Cannot delete the only remaining collection
+  - deleteCollection() handles moving places before deletion
+- [x] 8.5 Focus on Collection - src/components/Map.tsx
+  - Focus button (target icon) on each collection with places
+  - Clicking zooms map to fit all places in that collection
+  - Uses fitBoundsToPlaces() helper with focusCollectionId prop
+  - Works on both mobile and desktop
+- [x] 8.6 Place Count - src/components/CollectionsList.tsx
+  - Shows "X places" below each collection name
+  - getCollectionPlaceCounts() server action counts non-deleted places
+  - Fetched in parallel with collections for performance
 
 ### Phase 7: Edit & Delete Places (COMPLETE)
 - [x] 7.1-7.2 Edit Place Modal - src/components/EditPlaceModal.tsx
@@ -566,6 +592,14 @@ Read this file at the start of each session to maintain context and avoid repeat
 - Created: src/app/trash/page.tsx (trash view with restore/delete)
 - Modified: src/components/Layout.tsx (added Trash button)
 
+### 2026-01-22 (Phase 8.1-8.6)
+- Created: src/components/EditCollectionModal.tsx (edit/delete collection modal)
+- Modified: src/app/actions/collections.ts (added updateCollection, deleteCollection, getCollectionPlaceCounts)
+- Modified: src/components/CollectionsList.tsx (added edit/focus buttons, place counts)
+- Modified: src/components/Layout.tsx (integrated EditCollectionModal, onFocusCollection)
+- Modified: src/components/Map.tsx (added focusCollectionId, focusTrigger props)
+- Modified: src/app/page.tsx (added handleFocusCollection, focusCollectionId state)
+
 ---
 
 ## Learnings
@@ -591,11 +625,12 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Next Steps (from roadmap.md)
 
-1. Phase 8.1: Edit Collection UI
-2. Phase 8.2: Save Collection Edits
-3. Phase 8.3: Delete Collection UI
-4. Phase 8.4: Delete Collection Logic
-5. Phase 8.5: Focus on Collection
-6. Phase 8.6: Place Count
+1. Phase 9.1: Filter by Collection UI
+2. Phase 9.2: Filter by Collection Logic
+3. Phase 9.3: Filter by Tag UI
+4. Phase 9.4: Filter by Tag Logic
+5. Phase 9.5: Clear Filters
+6. Phase 9.6-9.7: Wire Up Clickable Collection/Tags
+7. Phase 9.8-9.9: Search Bar
 
 Reference: docs/roadmap.md for full task breakdown

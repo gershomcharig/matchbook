@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Folder, Plus } from 'lucide-react';
-import { getCollections, type Collection } from '@/app/actions/collections';
+import { Folder, Plus, Pencil, Focus } from 'lucide-react';
+import { getCollections, getCollectionPlaceCounts, type Collection } from '@/app/actions/collections';
 import { findIconByName } from '@/lib/icons';
 
 interface CollectionsListProps {
@@ -10,6 +10,10 @@ interface CollectionsListProps {
   onNewCollection?: () => void;
   /** Callback when a collection is clicked */
   onSelectCollection?: (collection: Collection) => void;
+  /** Callback when edit button is clicked */
+  onEditCollection?: (collection: Collection) => void;
+  /** Callback when focus button is clicked */
+  onFocusCollection?: (collection: Collection) => void;
   /** Currently selected collection ID */
   selectedId?: string;
   /** Trigger refresh when this value changes */
@@ -19,30 +23,41 @@ interface CollectionsListProps {
 export default function CollectionsList({
   onNewCollection,
   onSelectCollection,
+  onEditCollection,
+  onFocusCollection,
   selectedId,
   refreshTrigger,
 }: CollectionsListProps) {
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [placeCounts, setPlaceCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchCollections() {
+    async function fetchData() {
       setIsLoading(true);
       setError(null);
 
-      const result = await getCollections();
+      // Fetch collections and place counts in parallel
+      const [collectionsResult, countsResult] = await Promise.all([
+        getCollections(),
+        getCollectionPlaceCounts(),
+      ]);
 
-      if (result.success && result.collections) {
-        setCollections(result.collections);
+      if (collectionsResult.success && collectionsResult.collections) {
+        setCollections(collectionsResult.collections);
       } else {
-        setError(result.error || 'Failed to load collections');
+        setError(collectionsResult.error || 'Failed to load collections');
+      }
+
+      if (countsResult.success && countsResult.counts) {
+        setPlaceCounts(countsResult.counts);
       }
 
       setIsLoading(false);
     }
 
-    fetchCollections();
+    fetchData();
   }, [refreshTrigger]);
 
   if (isLoading) {
@@ -110,13 +125,13 @@ export default function CollectionsList({
             const iconData = findIconByName(collection.icon);
             const Icon = iconData?.icon || Folder;
             const isSelected = selectedId === collection.id;
+            const count = placeCounts[collection.id] || 0;
 
             return (
-              <button
+              <div
                 key={collection.id}
-                onClick={() => onSelectCollection?.(collection)}
                 className={`
-                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all
+                  group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
                   ${
                     isSelected
                       ? 'bg-zinc-100 dark:bg-zinc-800'
@@ -124,28 +139,70 @@ export default function CollectionsList({
                   }
                 `}
               >
-                {/* Color swatch with icon */}
-                <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm"
-                  style={{ backgroundColor: collection.color }}
+                {/* Main clickable area */}
+                <button
+                  onClick={() => onSelectCollection?.(collection)}
+                  className="flex items-center gap-3 flex-1 min-w-0 text-left"
                 >
-                  <Icon className="w-4 h-4 text-white" />
-                </div>
+                  {/* Color swatch with icon */}
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm"
+                    style={{ backgroundColor: collection.color }}
+                  >
+                    <Icon className="w-4 h-4 text-white" />
+                  </div>
 
-                {/* Name */}
-                <span
-                  className={`
-                    text-sm font-medium truncate
-                    ${
-                      isSelected
-                        ? 'text-zinc-900 dark:text-zinc-100'
-                        : 'text-zinc-700 dark:text-zinc-300'
-                    }
-                  `}
-                >
-                  {collection.name}
-                </span>
-              </button>
+                  {/* Name and count */}
+                  <div className="flex-1 min-w-0">
+                    <span
+                      className={`
+                        text-sm font-medium truncate block
+                        ${
+                          isSelected
+                            ? 'text-zinc-900 dark:text-zinc-100'
+                            : 'text-zinc-700 dark:text-zinc-300'
+                        }
+                      `}
+                    >
+                      {collection.name}
+                    </span>
+                    <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                      {count} {count === 1 ? 'place' : 'places'}
+                    </span>
+                  </div>
+                </button>
+
+                {/* Action buttons (visible on hover) */}
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Focus on map button */}
+                  {count > 0 && onFocusCollection && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFocusCollection(collection);
+                      }}
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                      title="Show on map"
+                    >
+                      <Focus className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+
+                  {/* Edit button */}
+                  {onEditCollection && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditCollection(collection);
+                      }}
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                      title="Edit collection"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>

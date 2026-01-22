@@ -102,6 +102,163 @@ export async function getCollections(): Promise<{
   }
 }
 
+export interface UpdateCollectionInput {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+}
+
+/**
+ * Update an existing collection
+ */
+export async function updateCollection(
+  input: UpdateCollectionInput
+): Promise<{ success: boolean; collection?: Collection; error?: string }> {
+  const { id, name, color, icon } = input;
+
+  if (!id) {
+    return { success: false, error: 'Collection ID is required' };
+  }
+
+  if (!name || name.trim().length === 0) {
+    return { success: false, error: 'Collection name is required' };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('collections')
+      .update({
+        name: name.trim(),
+        color,
+        icon,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase error updating collection:', error);
+      return { success: false, error: 'Failed to update collection' };
+    }
+
+    return { success: true, collection: data as Collection };
+  } catch (err) {
+    console.error('Error updating collection:', err);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+/**
+ * Delete a collection. Places in the collection are moved to the default collection.
+ */
+export async function deleteCollection(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!id) {
+    return { success: false, error: 'Collection ID is required' };
+  }
+
+  try {
+    // First, get or create a default collection to move places to
+    const defaultResult = await getOrCreateDefaultCollection();
+
+    // If deleting the only collection (which is the default), we need to handle this
+    // Check if we're deleting the default collection
+    const { data: collections } = await supabase
+      .from('collections')
+      .select('id')
+      .order('created_at', { ascending: true });
+
+    if (collections && collections.length === 1 && collections[0].id === id) {
+      return { success: false, error: 'Cannot delete the only collection' };
+    }
+
+    // Get a different collection to move places to
+    let targetCollectionId: string;
+
+    if (defaultResult.success && defaultResult.collection && defaultResult.collection.id !== id) {
+      targetCollectionId = defaultResult.collection.id;
+    } else {
+      // Find another collection that isn't the one being deleted
+      const { data: otherCollection } = await supabase
+        .from('collections')
+        .select('id')
+        .neq('id', id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (!otherCollection) {
+        return { success: false, error: 'No collection available to move places to' };
+      }
+      targetCollectionId = otherCollection.id;
+    }
+
+    // Move all places from the deleted collection to the target collection
+    const { error: moveError } = await supabase
+      .from('places')
+      .update({ collection_id: targetCollectionId })
+      .eq('collection_id', id);
+
+    if (moveError) {
+      console.error('Error moving places:', moveError);
+      return { success: false, error: 'Failed to move places to another collection' };
+    }
+
+    // Now delete the collection
+    const { error: deleteError } = await supabase
+      .from('collections')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      console.error('Supabase error deleting collection:', deleteError);
+      return { success: false, error: 'Failed to delete collection' };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('Error deleting collection:', err);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+/**
+ * Get count of places in each collection
+ */
+export async function getCollectionPlaceCounts(): Promise<{
+  success: boolean;
+  counts?: Record<string, number>;
+  error?: string;
+}> {
+  try {
+    const { data, error } = await supabase
+      .from('places')
+      .select('collection_id')
+      .is('deleted_at', null);
+
+    if (error) {
+      console.error('Supabase error fetching place counts:', error);
+      return { success: false, error: 'Failed to fetch place counts' };
+    }
+
+    // Count places per collection
+    const counts: Record<string, number> = {};
+    for (const place of data || []) {
+      if (place.collection_id) {
+        counts[place.collection_id] = (counts[place.collection_id] || 0) + 1;
+      }
+    }
+
+    return { success: true, counts };
+  } catch (err) {
+    console.error('Error fetching place counts:', err);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
 /**
  * Get the default collection, creating it if it doesn't exist.
  * Used when adding places without explicitly selecting a collection.
