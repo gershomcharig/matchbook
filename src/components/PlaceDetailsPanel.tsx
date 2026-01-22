@@ -231,9 +231,9 @@ export default function PlaceDetailsPanel({
         )}
 
         {/* Tags */}
-        {tags.length > 0 && (
-          <div className="flex items-start gap-3">
-            <Tag size={18} className="text-zinc-400 mt-0.5 flex-shrink-0" />
+        <div className="flex items-start gap-3">
+          <Tag size={18} className="text-zinc-400 mt-0.5 flex-shrink-0" />
+          {tags.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {tags.map((tag) => (
                 <button
@@ -245,8 +245,10 @@ export default function PlaceDetailsPanel({
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <span className="text-sm text-zinc-400 dark:text-zinc-500 italic">No tags</span>
+          )}
+        </div>
 
         {/* Notes */}
         {place.notes && (

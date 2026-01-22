@@ -7,12 +7,44 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Current Status
 **Last Updated**: 2026-01-22
-**Current Phase**: Phase 14 COMPLETE
-**Next Step**: Phase 15 - Polish & Edge Cases
+**Current Phase**: Phase 15 COMPLETE
+**Next Step**: Phase 16 - Deployment
 
 ---
 
 ## Completed Tasks
+
+### Phase 15: Polish & Edge Cases (COMPLETE)
+- [x] 15.1 Loading States
+  - Added refreshing indicator (floating pill) when data is being updated
+  - Shows "Updating..." with spinner during edit/delete/move operations
+  - isRefreshing state tracks async refresh operations
+- [x] 15.2 Error Messages
+  - Extended Toast component to support 'info' type (blue styling)
+  - Error toasts already exist for various failure scenarios
+  - Clipboard errors now have better messaging
+- [x] 15.3 Empty States
+  - ListView: Differentiated empty states for "no results from filter" vs "no places at all"
+    - Filter empty: "No matching places" with suggestion to adjust filters
+    - No data: "No places yet" with prompt to paste or add manually
+  - PlaceDetailsPanel: Added "No tags" placeholder when place has no tags
+  - Existing empty states reviewed: collections list, trash page, main map already have good empty states
+- [x] 15.4 Soft Limits Warning
+  - Added SOFT_LIMIT_THRESHOLD constant (500 places)
+  - Banner appears when data exceeds threshold
+  - Dismissible with "X" button
+  - Includes helpful message about performance and archiving
+- [x] 15.5 Responsive Review
+  - Soft limit warning positioned correctly for both mobile and desktop
+  - All existing responsive layouts verified (sidebar, panels, filters)
+- [x] 15.6 Accessibility
+  - FilterBar: Added role="search", aria-label, aria-expanded, aria-haspopup
+  - Search input: Changed type to "search" with proper aria-label
+  - Collection/Tag dropdowns: Added aria-expanded and aria-haspopup="listbox"
+  - Clear buttons: Added aria-label attributes
+  - Escape key closes filter dropdowns
+  - MapMarker: Added role="button", tabIndex={0}, aria-label with place name
+  - MapMarker: Added keyboard support (Enter/Space to activate)
 
 ### Phase 14: PWA & Share Sheet (COMPLETE)
 - [x] 14.1 Manifest File - public/manifest.json
@@ -825,12 +857,20 @@ Read this file at the start of each session to maintain context and avoid repeat
 - Modified: src/app/page.tsx (shared place handling, Suspense wrapper)
 - Modified: src/components/Layout.tsx (paste button, shared place props)
 
+### 2026-01-22 (Phase 15.1-15.6)
+- Modified: src/components/Toast.tsx (added 'info' toast type with blue styling)
+- Modified: src/components/ListView.tsx (improved empty states with filter context)
+- Modified: src/components/PlaceDetailsPanel.tsx (added "No tags" placeholder)
+- Modified: src/components/FilterBar.tsx (accessibility attributes, keyboard support)
+- Modified: src/components/MapMarker.tsx (accessibility: role, tabIndex, aria-label, keyboard)
+- Modified: src/components/Map.tsx (pass placeName to MapMarker)
+- Modified: src/app/page.tsx (refreshing indicator, soft limit warning, hasActiveFilters)
+
 ---
 
 ## Next Steps (from roadmap.md)
 
-1. Phase 15: Polish & Edge Cases
-2. Phase 16: Deployment
+1. Phase 16: Deployment
 
 Note: Export & Import moved to future features.
 

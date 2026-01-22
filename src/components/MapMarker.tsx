@@ -8,6 +8,8 @@ import { findIconByName } from '@/lib/icons';
 interface MapMarkerProps {
   /** Unique identifier for the place */
   placeId: string;
+  /** Place name for accessibility */
+  placeName?: string;
   /** Latitude coordinate */
   lat: number;
   /** Longitude coordinate */
@@ -27,6 +29,7 @@ const LONG_PRESS_DURATION = 500;
 
 export default function MapMarker({
   placeId,
+  placeName,
   lat,
   lng,
   color,
@@ -117,6 +120,15 @@ export default function MapMarker({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
+        role="button"
+        tabIndex={0}
+        aria-label={placeName ? `View ${placeName}` : 'View place details'}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.(placeId);
+          }
+        }}
       >
         {/* Pin body - teardrop shape using SVG */}
         <svg

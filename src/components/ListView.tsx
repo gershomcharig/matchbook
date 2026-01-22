@@ -24,6 +24,10 @@ interface ListViewProps {
   onPlaceClick: (placeId: string) => void;
   /** Currently selected place ID (for highlighting) */
   selectedPlaceId?: string | null;
+  /** Whether filters are active (for better empty state messages) */
+  hasActiveFilters?: boolean;
+  /** Total number of places before filtering */
+  totalPlacesCount?: number;
 }
 
 export default function ListView({
@@ -31,6 +35,8 @@ export default function ListView({
   collections,
   onPlaceClick,
   selectedPlaceId,
+  hasActiveFilters = false,
+  totalPlacesCount = 0,
 }: ListViewProps) {
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
@@ -124,14 +130,28 @@ export default function ListView({
   };
 
   if (places.length === 0) {
+    // Different messages for "no results from filter" vs "no places at all"
+    const isFilteredEmpty = hasActiveFilters && totalPlacesCount > 0;
+
     return (
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center">
+        <div className="text-center max-w-xs">
           <MapPin size={48} className="mx-auto text-zinc-300 dark:text-zinc-700 mb-4" />
-          <p className="text-zinc-500 dark:text-zinc-400 text-lg">No places to show</p>
-          <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">
-            Try adjusting your filters or add some places
-          </p>
+          {isFilteredEmpty ? (
+            <>
+              <p className="text-zinc-500 dark:text-zinc-400 text-lg font-medium">No matching places</p>
+              <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-2">
+                No places match your current filters. Try adjusting your search or clearing filters to see all {totalPlacesCount} place{totalPlacesCount !== 1 ? 's' : ''}.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-zinc-500 dark:text-zinc-400 text-lg font-medium">No places yet</p>
+              <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-2">
+                Paste a Google Maps link or add a place manually to get started.
+              </p>
+            </>
+          )}
         </div>
       </div>
     );

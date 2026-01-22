@@ -22,6 +22,7 @@ import {
 import ContextMenu, { type ContextMenuAction } from '@/components/ContextMenu';
 import { getCollections, type Collection } from '@/app/actions/collections';
 import { type ExtractedPlace } from '@/components/AddPlaceModal';
+import { AlertTriangle, X } from 'lucide-react';
 
 function HomeContent() {
   // Data state
@@ -29,6 +30,12 @@ function HomeContent() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showSoftLimitWarning, setShowSoftLimitWarning] = useState(false);
+  const [softLimitDismissed, setSoftLimitDismissed] = useState(false);
+
+  // Soft limit threshold
+  const SOFT_LIMIT_THRESHOLD = 500;
 
   // Selected place state
   const [selectedPlace, setSelectedPlace] = useState<PlaceWithCollection | null>(null);
@@ -76,6 +83,10 @@ function HomeContent() {
     if (placesResult.success && placesResult.places) {
       console.log('[Places Loaded]', placesResult.places.length, 'places with collections');
       setPlaces(placesResult.places);
+      // Check soft limit
+      if (placesResult.places.length >= SOFT_LIMIT_THRESHOLD && !softLimitDismissed) {
+        setShowSoftLimitWarning(true);
+      }
     } else {
       console.error('[Failed to load places]', placesResult.error);
     }
@@ -269,6 +280,7 @@ function HomeContent() {
 
   // Handle edit save - refresh places and update selected place
   const handleEditSave = useCallback(async () => {
+    setIsRefreshing(true);
     await fetchData();
     // Refresh the selected place with updated data
     if (selectedPlace) {
@@ -281,12 +293,15 @@ function HomeContent() {
         }
       }
     }
+    setIsRefreshing(false);
   }, [fetchData, selectedPlace, fetchTagsForPlace]);
 
   // Handle delete - refresh places and close panel
   const handleDelete = useCallback(async () => {
+    setIsRefreshing(true);
     await fetchData();
     handleClosePanel();
+    setIsRefreshing(false);
   }, [fetchData, handleClosePanel]);
 
   // Handle focus on collection (zoom map to its places)
@@ -342,6 +357,7 @@ function HomeContent() {
         case 'move':
           if (action.collectionId) {
             // Move place to new collection
+            setIsRefreshing(true);
             const result = await updatePlace({
               id: contextMenuPlace.id,
               collectionId: action.collectionId,
@@ -349,6 +365,7 @@ function HomeContent() {
             if (result.success) {
               await fetchData();
             }
+            setIsRefreshing(false);
           }
           break;
 
@@ -366,10 +383,12 @@ function HomeContent() {
 
         case 'delete':
           // Soft delete the place
+          setIsRefreshing(true);
           const deleteResult = await softDeletePlace(contextMenuPlace.id);
           if (deleteResult.success) {
             await fetchData();
           }
+          setIsRefreshing(false);
           break;
       }
     },
@@ -377,6 +396,10 @@ function HomeContent() {
   );
 
   const hasPlaces = places.length > 0;
+  const hasActiveFilters =
+    selectedCollections.length > 0 ||
+    selectedTags.length > 0 ||
+    searchQuery.trim().length > 0;
 
   return (
     <Layout onPlaceAdded={fetchData} onFocusCollection={handleFocusCollection} sharedPlace={sharedPlace} onSharedPlaceHandled={handleSharedPlaceHandled}>
@@ -397,6 +420,43 @@ function HomeContent() {
       <div className="absolute bottom-6 left-4 z-10 lg:top-4 lg:bottom-auto lg:left-auto lg:right-[340px]">
         <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
       </div>
+
+      {/* Refreshing indicator */}
+      {isRefreshing && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 shadow-lg">
+            <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm text-zinc-600 dark:text-zinc-400">Updating...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Soft limit warning banner */}
+      {showSoftLimitWarning && (
+        <div className="absolute bottom-20 lg:bottom-4 left-4 right-4 lg:left-auto lg:right-[340px] z-20 max-w-md">
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-50/95 dark:bg-amber-950/95 backdrop-blur-sm border border-amber-200 dark:border-amber-800 shadow-lg">
+            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                Large collection detected
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                You have {places.length} places. Performance may slow down with many places. Consider exporting and archiving old places.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowSoftLimitWarning(false);
+                setSoftLimitDismissed(true);
+              }}
+              className="p-1 rounded-lg text-amber-500 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors flex-shrink-0"
+              aria-label="Dismiss warning"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Map View */}
       {viewMode === 'map' && (
@@ -419,6 +479,8 @@ function HomeContent() {
           collections={collections}
           onPlaceClick={handlePlaceClick}
           selectedPlaceId={selectedPlace?.id}
+          hasActiveFilters={hasActiveFilters}
+          totalPlacesCount={places.length}
         />
       )}
 

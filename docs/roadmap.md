@@ -597,31 +597,31 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 ## Phase 15: Polish & Edge Cases
 
 ### 15.1 Loading States
-- [ ] Add loading spinners/skeletons for async operations
-- [ ] **Test**: Loading visible during fetches
+- [x] Add loading spinners/skeletons for async operations
+- [x] **Test**: Loading visible during fetches
 
 ### 15.2 Error Messages
-- [ ] User-friendly error messages for all failures
-- [ ] **Test**: Errors are clear and helpful
+- [x] User-friendly error messages for all failures
+- [x] **Test**: Errors are clear and helpful
 
 ### 15.3 Empty States
-- [ ] Empty state for: no places, no collections, no search results, empty trash
-- [ ] **Test**: Each empty state looks good
+- [x] Empty state for: no places, no collections, no search results, empty trash
+- [x] **Test**: Each empty state looks good
 
 ### 15.4 Soft Limits Warning
-- [ ] Check data size on load
-- [ ] Warn if approaching performance limits
-- [ ] **Test**: Warning appears with lots of data
+- [x] Check data size on load
+- [x] Warn if approaching performance limits
+- [x] **Test**: Warning appears with lots of data
 
 ### 15.5 Responsive Review
-- [ ] Test all screens on mobile, tablet, desktop
-- [ ] Fix any layout issues
-- [ ] **Test**: App looks good at all sizes
+- [x] Test all screens on mobile, tablet, desktop
+- [x] Fix any layout issues
+- [x] **Test**: App looks good at all sizes
 
 ### 15.6 Accessibility
-- [ ] Keyboard navigation works
-- [ ] Screen reader basics
-- [ ] **Test**: Can use app with keyboard
+- [x] Keyboard navigation works
+- [x] Screen reader basics
+- [x] **Test**: Can use app with keyboard
 
 ---
 

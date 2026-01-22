@@ -131,6 +131,7 @@ export default function Map({ places = [], onMarkerClick, onMarkerContextMenu, f
           <MapMarker
             key={place.id}
             placeId={place.id}
+            placeName={place.name}
             lat={place.lat}
             lng={place.lng}
             color={place.collection.color}

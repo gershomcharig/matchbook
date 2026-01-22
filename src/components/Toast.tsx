@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CheckCircle, XCircle, X } from 'lucide-react';
+import { CheckCircle, XCircle, X, Info, Copy } from 'lucide-react';
 
-export type ToastType = 'success' | 'error';
+export type ToastType = 'success' | 'error' | 'info';
 
 export interface ToastData {
   id: string;
@@ -40,6 +40,32 @@ function Toast({ toast, onDismiss }: ToastProps) {
   };
 
   const isSuccess = toast.type === 'success';
+  const isInfo = toast.type === 'info';
+  const isError = toast.type === 'error';
+
+  const getBackgroundClass = () => {
+    if (isSuccess) return 'bg-emerald-50/95 dark:bg-emerald-950/95 border-emerald-200 dark:border-emerald-800';
+    if (isInfo) return 'bg-blue-50/95 dark:bg-blue-950/95 border-blue-200 dark:border-blue-800';
+    return 'bg-red-50/95 dark:bg-red-950/95 border-red-200 dark:border-red-800';
+  };
+
+  const getIcon = () => {
+    if (isSuccess) return <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />;
+    if (isInfo) return <Info className="w-5 h-5 text-blue-500 flex-shrink-0" />;
+    return <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />;
+  };
+
+  const getTextClass = () => {
+    if (isSuccess) return 'text-emerald-800 dark:text-emerald-200';
+    if (isInfo) return 'text-blue-800 dark:text-blue-200';
+    return 'text-red-800 dark:text-red-200';
+  };
+
+  const getButtonClass = () => {
+    if (isSuccess) return 'text-emerald-400 hover:text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900';
+    if (isInfo) return 'text-blue-400 hover:text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900';
+    return 'text-red-400 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900';
+  };
 
   return (
     <div
@@ -47,39 +73,21 @@ function Toast({ toast, onDismiss }: ToastProps) {
         flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border backdrop-blur-sm
         transition-all duration-200 ease-out
         ${isVisible && !isLeaving ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}
-        ${
-          isSuccess
-            ? 'bg-emerald-50/95 dark:bg-emerald-950/95 border-emerald-200 dark:border-emerald-800'
-            : 'bg-red-50/95 dark:bg-red-950/95 border-red-200 dark:border-red-800'
-        }
+        ${getBackgroundClass()}
       `}
     >
       {/* Icon */}
-      {isSuccess ? (
-        <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-      ) : (
-        <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-      )}
+      {getIcon()}
 
       {/* Message */}
-      <p
-        className={`text-sm font-medium flex-1 ${
-          isSuccess
-            ? 'text-emerald-800 dark:text-emerald-200'
-            : 'text-red-800 dark:text-red-200'
-        }`}
-      >
+      <p className={`text-sm font-medium flex-1 ${getTextClass()}`}>
         {toast.message}
       </p>
 
       {/* Dismiss button */}
       <button
         onClick={handleDismiss}
-        className={`p-1 rounded-lg transition-colors ${
-          isSuccess
-            ? 'text-emerald-400 hover:text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900'
-            : 'text-red-400 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900'
-        }`}
+        className={`p-1 rounded-lg transition-colors ${getButtonClass()}`}
       >
         <X className="w-4 h-4" />
       </button>

@@ -57,7 +57,7 @@ export default function FilterBar({
     selectedTags.length > 0 ||
     searchQuery.trim().length > 0;
 
-  // Close dropdowns when clicking outside
+  // Close dropdowns when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -74,8 +74,19 @@ export default function FilterBar({
       }
     };
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsCollectionDropdownOpen(false);
+        setIsTagDropdownOpen(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   // Toggle collection selection
@@ -120,24 +131,27 @@ export default function FilterBar({
   };
 
   return (
-    <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2">
+    <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2" role="search" aria-label="Filter places">
       {/* Search input */}
       <div className="relative">
         <Search
           size={16}
           className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+          aria-hidden="true"
         />
         <input
-          type="text"
+          type="search"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search places..."
+          aria-label="Search places by name, address, notes, or tags"
           className="w-[180px] sm:w-[220px] pl-9 pr-8 py-2 rounded-xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50"
         />
         {searchQuery && (
           <button
             onClick={() => onSearchChange('')}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            aria-label="Clear search"
           >
             <X size={14} />
           </button>
@@ -151,13 +165,16 @@ export default function FilterBar({
             setIsCollectionDropdownOpen(!isCollectionDropdownOpen);
             setIsTagDropdownOpen(false);
           }}
+          aria-expanded={isCollectionDropdownOpen}
+          aria-haspopup="listbox"
+          aria-label={`Filter by collection: ${getCollectionLabel()}`}
           className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50 ${
             selectedCollections.length > 0
               ? 'bg-amber-100 dark:bg-amber-900/40 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200'
               : 'bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-900'
           }`}
         >
-          <Layers size={14} />
+          <Layers size={14} aria-hidden="true" />
           <span className="hidden sm:inline">{getCollectionLabel()}</span>
           <span className="sm:hidden">
             {selectedCollections.length > 0 ? selectedCollections.length : ''}
@@ -165,6 +182,7 @@ export default function FilterBar({
           <ChevronDown
             size={14}
             className={`transition-transform ${isCollectionDropdownOpen ? 'rotate-180' : ''}`}
+            aria-hidden="true"
           />
         </button>
 
@@ -217,13 +235,16 @@ export default function FilterBar({
             setIsTagDropdownOpen(!isTagDropdownOpen);
             setIsCollectionDropdownOpen(false);
           }}
+          aria-expanded={isTagDropdownOpen}
+          aria-haspopup="listbox"
+          aria-label={`Filter by tag: ${getTagLabel()}`}
           className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50 ${
             selectedTags.length > 0
               ? 'bg-amber-100 dark:bg-amber-900/40 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200'
               : 'bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-900'
           }`}
         >
-          <Tag size={14} />
+          <Tag size={14} aria-hidden="true" />
           <span className="hidden sm:inline">{getTagLabel()}</span>
           <span className="sm:hidden">
             {selectedTags.length > 0 ? selectedTags.length : ''}
@@ -231,6 +252,7 @@ export default function FilterBar({
           <ChevronDown
             size={14}
             className={`transition-transform ${isTagDropdownOpen ? 'rotate-180' : ''}`}
+            aria-hidden="true"
           />
         </button>
 
@@ -271,11 +293,12 @@ export default function FilterBar({
       {hasActiveFilters && (
         <button
           onClick={onClearFilters}
+          aria-label="Clear all filters"
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-sm font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50"
         >
-          <Filter size={14} />
+          <Filter size={14} aria-hidden="true" />
           <span className="hidden sm:inline">Clear</span>
-          <X size={14} />
+          <X size={14} aria-hidden="true" />
         </button>
       )}
     </div>
