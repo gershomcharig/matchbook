@@ -13,9 +13,12 @@ import {
   getPlacesWithCollections,
   getTagsForPlace,
   getTags,
+  updatePlace,
+  softDeletePlace,
   type PlaceWithCollection,
   type Tag,
 } from '@/app/actions/places';
+import ContextMenu, { type ContextMenuAction } from '@/components/ContextMenu';
 import { getCollections, type Collection } from '@/app/actions/collections';
 
 export default function Home() {
@@ -42,6 +45,19 @@ export default function Home() {
   // Focus state for map
   const [focusCollectionId, setFocusCollectionId] = useState<string | null>(null);
   const [focusTrigger, setFocusTrigger] = useState(0);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    isVisible: boolean;
+    x: number;
+    y: number;
+    placeId: string | null;
+  }>({
+    isVisible: false,
+    x: 0,
+    y: 0,
+    placeId: null,
+  });
 
   // Fetch initial data on mount
   const fetchData = useCallback(async () => {
@@ -247,6 +263,85 @@ export default function Home() {
     setViewMode('map');
   }, []);
 
+  // Handle context menu open (right-click or long-press on marker)
+  const handleMarkerContextMenu = useCallback(
+    (placeId: string, x: number, y: number) => {
+      console.log('[Context Menu Requested]', placeId, x, y);
+      setContextMenu({
+        isVisible: true,
+        x,
+        y,
+        placeId,
+      });
+    },
+    []
+  );
+
+  // Handle context menu close
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu((prev) => ({
+      ...prev,
+      isVisible: false,
+    }));
+  }, []);
+
+  // Get the place for context menu
+  const contextMenuPlace = contextMenu.placeId
+    ? places.find((p) => p.id === contextMenu.placeId)
+    : null;
+
+  // Handle context menu actions
+  const handleContextMenuAction = useCallback(
+    async (action: ContextMenuAction) => {
+      if (!contextMenuPlace) return;
+
+      handleCloseContextMenu();
+
+      switch (action.type) {
+        case 'edit':
+          // Open edit modal for this place
+          setSelectedPlace(contextMenuPlace);
+          fetchTagsForPlace(contextMenuPlace.id);
+          setIsEditModalOpen(true);
+          break;
+
+        case 'move':
+          if (action.collectionId) {
+            // Move place to new collection
+            const result = await updatePlace({
+              id: contextMenuPlace.id,
+              collectionId: action.collectionId,
+            });
+            if (result.success) {
+              await fetchData();
+            }
+          }
+          break;
+
+        case 'copy':
+          // Copy address to clipboard (handled in ContextMenu component)
+          break;
+
+        case 'navigate':
+          // Open Google Maps directions
+          if (contextMenuPlace.lat && contextMenuPlace.lng) {
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${contextMenuPlace.lat},${contextMenuPlace.lng}`;
+            window.open(url, '_blank');
+          }
+          break;
+
+        case 'delete':
+          // Soft delete the place
+          const deleteResult = await softDeletePlace(contextMenuPlace.id);
+          if (deleteResult.success) {
+            await fetchData();
+          }
+          break;
+      }
+    },
+    [contextMenuPlace, handleCloseContextMenu, fetchTagsForPlace, fetchData]
+  );
+
   const hasPlaces = places.length > 0;
 
   return (
@@ -275,6 +370,7 @@ export default function Home() {
           <Map
             places={filteredPlaces}
             onMarkerClick={handleMarkerClick}
+            onMarkerContextMenu={handleMarkerContextMenu}
             focusCollectionId={focusCollectionId}
             focusTrigger={focusTrigger}
           />
@@ -310,6 +406,19 @@ export default function Home() {
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleEditSave}
         onDelete={handleDelete}
+      />
+
+      {/* Context Menu */}
+      <ContextMenu
+        x={contextMenu.x}
+        y={contextMenu.y}
+        isVisible={contextMenu.isVisible}
+        placeName={contextMenuPlace?.name || ''}
+        placeAddress={contextMenuPlace?.address || null}
+        currentCollectionId={contextMenuPlace?.collection_id || ''}
+        collections={collections}
+        onAction={handleContextMenuAction}
+        onClose={handleCloseContextMenu}
       />
     </Layout>
   );

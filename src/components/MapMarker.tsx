@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useCallback } from 'react';
 import { Marker, MarkerEvent } from 'react-map-gl/mapbox';
 import { getContrastColor } from '@/lib/colors';
 import { findIconByName } from '@/lib/icons';
@@ -17,7 +18,12 @@ interface MapMarkerProps {
   iconName: string;
   /** Click handler */
   onClick?: (placeId: string) => void;
+  /** Context menu handler (right-click or long-press) */
+  onContextMenu?: (placeId: string, x: number, y: number) => void;
 }
+
+// Long press duration in milliseconds
+const LONG_PRESS_DURATION = 500;
 
 export default function MapMarker({
   placeId,
@@ -26,15 +32,74 @@ export default function MapMarker({
   color,
   iconName,
   onClick,
+  onContextMenu,
 }: MapMarkerProps) {
   const iconData = findIconByName(iconName);
   const IconComponent = iconData?.icon;
   const contrastColor = getContrastColor(color);
 
+  // Long press timer ref
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
+  const touchStartPos = useRef({ x: 0, y: 0 });
+
   const handleClick = (e: MarkerEvent<MouseEvent>) => {
     e.originalEvent.stopPropagation();
+    // Don't trigger click if long press was just triggered
+    if (longPressTriggered.current) {
+      longPressTriggered.current = false;
+      return;
+    }
     onClick?.(placeId);
   };
+
+  // Handle right-click (desktop context menu)
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onContextMenu?.(placeId, e.clientX, e.clientY);
+    },
+    [placeId, onContextMenu]
+  );
+
+  // Handle touch start (begin long press detection)
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      const touch = e.touches[0];
+      touchStartPos.current = { x: touch.clientX, y: touch.clientY };
+      longPressTriggered.current = false;
+
+      longPressTimer.current = setTimeout(() => {
+        longPressTriggered.current = true;
+        onContextMenu?.(placeId, touch.clientX, touch.clientY);
+      }, LONG_PRESS_DURATION);
+    },
+    [placeId, onContextMenu]
+  );
+
+  // Handle touch move (cancel long press if moved too far)
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!longPressTimer.current) return;
+
+    const touch = e.touches[0];
+    const moveThreshold = 10; // pixels
+    const dx = Math.abs(touch.clientX - touchStartPos.current.x);
+    const dy = Math.abs(touch.clientY - touchStartPos.current.y);
+
+    if (dx > moveThreshold || dy > moveThreshold) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  // Handle touch end (cancel long press timer)
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
 
   return (
     <Marker
@@ -47,6 +112,11 @@ export default function MapMarker({
       <div
         className="relative cursor-pointer transition-transform hover:scale-110 active:scale-95"
         style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+        onContextMenu={handleContextMenu}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       >
         {/* Pin body - teardrop shape using SVG */}
         <svg

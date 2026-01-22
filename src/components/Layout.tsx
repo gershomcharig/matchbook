@@ -2,16 +2,19 @@
 
 import { ReactNode, useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Plus, Layers, Trash2 } from 'lucide-react';
+import { LogOut, Plus, Layers, Trash2, MapPinPlus } from 'lucide-react';
 import { clearSessionToken } from '@/lib/auth';
 import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl } from '@/lib/maps';
 import { reverseGeocode } from '@/lib/geocoding';
 import NewCollectionModal from './NewCollectionModal';
 import EditCollectionModal from './EditCollectionModal';
 import AddPlaceModal, { type ExtractedPlace } from './AddPlaceModal';
+import ManualPlaceModal from './ManualPlaceModal';
+import DuplicateWarningModal from './DuplicateWarningModal';
 import CollectionsList from './CollectionsList';
 import { createCollection, updateCollection, deleteCollection, getCollectionPlaceCounts, type Collection } from '@/app/actions/collections';
-import { createPlace } from '@/app/actions/places';
+import { createPlace, updatePlaceTags, checkForDuplicates, type PlaceWithCollection } from '@/app/actions/places';
+import { forwardGeocode } from '@/lib/geocoding';
 import { ToastContainer, generateToastId, type ToastData } from './Toast';
 
 interface LayoutProps {
@@ -39,10 +42,34 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
   const [isSavingCollection, setIsSavingCollection] = useState(false);
   const [isDeletingCollection, setIsDeletingCollection] = useState(false);
 
-  // Add Place modal state
+  // Add Place modal state (paste)
   const [isAddPlaceOpen, setIsAddPlaceOpen] = useState(false);
   const [extractedPlace, setExtractedPlace] = useState<ExtractedPlace | null>(null);
   const [isAddingPlace, setIsAddingPlace] = useState(false);
+
+  // Manual Place modal state
+  const [isManualPlaceOpen, setIsManualPlaceOpen] = useState(false);
+  const [isAddingManualPlace, setIsAddingManualPlace] = useState(false);
+  const [manualPlaceError, setManualPlaceError] = useState<string | null>(null);
+
+  // Duplicate warning modal state
+  const [isDuplicateWarningOpen, setIsDuplicateWarningOpen] = useState(false);
+  const [duplicateExistingPlace, setDuplicateExistingPlace] = useState<PlaceWithCollection | null>(null);
+  const [duplicateMatchType, setDuplicateMatchType] = useState<'coordinates' | 'url' | null>(null);
+  const [pendingPlaceData, setPendingPlaceData] = useState<{
+    type: 'paste' | 'manual';
+    place?: ExtractedPlace;
+    collectionId: string;
+    manualData?: {
+      name: string;
+      address: string;
+      notes: string;
+      tags: string[];
+      lat: number;
+      lng: number;
+    };
+  } | null>(null);
+  const [isAddingDuplicate, setIsAddingDuplicate] = useState(false);
 
   // Toast notifications
   const [toasts, setToasts] = useState<ToastData[]>([]);
@@ -160,6 +187,36 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
     setIsAddingPlace(true);
     console.log('[Saving Place]', data);
 
+    // Check for duplicates first
+    const duplicateCheck = await checkForDuplicates(
+      data.place.lat,
+      data.place.lng,
+      data.place.googleMapsUrl
+    );
+
+    if (duplicateCheck.success && duplicateCheck.isDuplicate && duplicateCheck.existingPlace) {
+      // Show duplicate warning modal
+      setIsAddingPlace(false);
+      setDuplicateExistingPlace(duplicateCheck.existingPlace);
+      setDuplicateMatchType(duplicateCheck.matchType || null);
+      setPendingPlaceData({
+        type: 'paste',
+        place: data.place,
+        collectionId: data.collectionId,
+      });
+      setIsAddPlaceOpen(false);
+      setIsDuplicateWarningOpen(true);
+      return;
+    }
+
+    // No duplicate found, proceed with saving
+    await savePlaceFromPaste(data);
+  };
+
+  // Actually save a pasted place (called after duplicate check or when adding anyway)
+  const savePlaceFromPaste = async (data: { place: ExtractedPlace; collectionId: string }) => {
+    setIsAddingPlace(true);
+
     const result = await createPlace({
       name: data.place.name,
       address: data.place.address,
@@ -187,6 +244,145 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
   const handleCloseAddPlace = () => {
     setIsAddPlaceOpen(false);
     setExtractedPlace(null);
+  };
+
+  // Handle saving a manually entered place
+  const handleSaveManualPlace = async (data: {
+    name: string;
+    address: string;
+    notes: string;
+    tags: string[];
+    collectionId: string;
+  }) => {
+    setIsAddingManualPlace(true);
+    setManualPlaceError(null);
+    console.log('[Saving Manual Place]', data);
+
+    // Geocode the address to get coordinates
+    const geocodeResult = await forwardGeocode(data.address);
+
+    if (!geocodeResult) {
+      setManualPlaceError('Could not find location for this address. Please try a different address.');
+      setIsAddingManualPlace(false);
+      return;
+    }
+
+    console.log('[Geocoded Address]', geocodeResult);
+
+    // Check for duplicates
+    const duplicateCheck = await checkForDuplicates(
+      geocodeResult.lat,
+      geocodeResult.lng,
+      null
+    );
+
+    if (duplicateCheck.success && duplicateCheck.isDuplicate && duplicateCheck.existingPlace) {
+      // Show duplicate warning modal
+      setIsAddingManualPlace(false);
+      setDuplicateExistingPlace(duplicateCheck.existingPlace);
+      setDuplicateMatchType(duplicateCheck.matchType || null);
+      setPendingPlaceData({
+        type: 'manual',
+        collectionId: data.collectionId,
+        manualData: {
+          name: data.name,
+          address: geocodeResult.address || data.address,
+          notes: data.notes,
+          tags: data.tags,
+          lat: geocodeResult.lat,
+          lng: geocodeResult.lng,
+        },
+      });
+      setIsManualPlaceOpen(false);
+      setIsDuplicateWarningOpen(true);
+      return;
+    }
+
+    // No duplicate found, proceed with saving
+    await saveManualPlaceWithData({
+      name: data.name,
+      address: geocodeResult.address || data.address,
+      notes: data.notes,
+      tags: data.tags,
+      lat: geocodeResult.lat,
+      lng: geocodeResult.lng,
+      collectionId: data.collectionId,
+    });
+  };
+
+  // Actually save a manual place (called after duplicate check or when adding anyway)
+  const saveManualPlaceWithData = async (data: {
+    name: string;
+    address: string;
+    notes: string;
+    tags: string[];
+    lat: number;
+    lng: number;
+    collectionId: string;
+  }) => {
+    setIsAddingManualPlace(true);
+
+    // Create the place
+    const result = await createPlace({
+      name: data.name,
+      address: data.address,
+      lat: data.lat,
+      lng: data.lng,
+      collectionId: data.collectionId,
+      notes: data.notes || undefined,
+    });
+
+    if (!result.success || !result.place) {
+      setManualPlaceError(result.error || 'Failed to save place. Please try again.');
+      setIsAddingManualPlace(false);
+      return;
+    }
+
+    // Add tags if provided
+    if (data.tags.length > 0) {
+      await updatePlaceTags(result.place.id, data.tags);
+    }
+
+    console.log('[Manual Place Saved Successfully]', result.place);
+    setIsAddingManualPlace(false);
+    setIsManualPlaceOpen(false);
+    showToast('success', `"${data.name}" added to your collection!`);
+    onPlaceAdded?.();
+  };
+
+  const handleCloseManualPlace = () => {
+    setIsManualPlaceOpen(false);
+    setManualPlaceError(null);
+  };
+
+  // Handle closing duplicate warning modal
+  const handleCloseDuplicateWarning = () => {
+    setIsDuplicateWarningOpen(false);
+    setDuplicateExistingPlace(null);
+    setDuplicateMatchType(null);
+    setPendingPlaceData(null);
+  };
+
+  // Handle adding place anyway despite duplicate warning
+  const handleAddDuplicateAnyway = async () => {
+    if (!pendingPlaceData) return;
+
+    setIsAddingDuplicate(true);
+
+    if (pendingPlaceData.type === 'paste' && pendingPlaceData.place) {
+      await savePlaceFromPaste({
+        place: pendingPlaceData.place,
+        collectionId: pendingPlaceData.collectionId,
+      });
+    } else if (pendingPlaceData.type === 'manual' && pendingPlaceData.manualData) {
+      await saveManualPlaceWithData({
+        ...pendingPlaceData.manualData,
+        collectionId: pendingPlaceData.collectionId,
+      });
+    }
+
+    setIsAddingDuplicate(false);
+    handleCloseDuplicateWarning();
   };
 
   // Global paste event listener
@@ -303,6 +499,16 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
             <span className="text-sm font-medium">Collections</span>
           </button>
 
+          {/* Add Place Manually button */}
+          <button
+            onClick={() => setIsManualPlaceOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50"
+            title="Add place manually"
+          >
+            <MapPinPlus className="w-4 h-4" />
+            <span className="text-sm font-medium hidden sm:inline">Add Place</span>
+          </button>
+
           {/* New Collection button */}
           <button
             onClick={() => setIsNewCollectionOpen(true)}
@@ -345,13 +551,33 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
         isSubmitting={isSubmitting}
       />
 
-      {/* Add Place Modal */}
+      {/* Add Place Modal (from paste) */}
       <AddPlaceModal
         isOpen={isAddPlaceOpen}
         onClose={handleCloseAddPlace}
         place={extractedPlace}
         onSave={handleSavePlace}
         isSubmitting={isAddingPlace}
+      />
+
+      {/* Manual Place Modal */}
+      <ManualPlaceModal
+        isOpen={isManualPlaceOpen}
+        onClose={handleCloseManualPlace}
+        onSave={handleSaveManualPlace}
+        isSubmitting={isAddingManualPlace}
+        error={manualPlaceError}
+      />
+
+      {/* Duplicate Warning Modal */}
+      <DuplicateWarningModal
+        isOpen={isDuplicateWarningOpen}
+        onClose={handleCloseDuplicateWarning}
+        newPlaceName={pendingPlaceData?.type === 'paste' ? pendingPlaceData.place?.name || '' : pendingPlaceData?.manualData?.name || ''}
+        existingPlace={duplicateExistingPlace}
+        matchType={duplicateMatchType}
+        onAddAnyway={handleAddDuplicateAnyway}
+        isSubmitting={isAddingDuplicate}
       />
 
       {/* Edit Collection Modal */}

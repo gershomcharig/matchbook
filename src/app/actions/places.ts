@@ -554,6 +554,153 @@ export interface PlaceWithCollectionAndTags extends PlaceWithCollection {
   tags: Tag[];
 }
 
+// ============ Duplicate Detection Functions ============
+
+/**
+ * Result of a duplicate check
+ */
+export interface DuplicateCheckResult {
+  success: boolean;
+  isDuplicate: boolean;
+  existingPlace?: PlaceWithCollection;
+  matchType?: 'coordinates' | 'url';
+  error?: string;
+}
+
+/**
+ * Calculate distance between two coordinates in meters using Haversine formula
+ */
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000; // Earth's radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/**
+ * Check for duplicate place by coordinates (within ~50m)
+ */
+export async function checkDuplicateByCoordinates(
+  lat: number,
+  lng: number,
+  thresholdMeters: number = 50
+): Promise<DuplicateCheckResult> {
+  try {
+    // Get all non-deleted places with coordinates
+    const { data, error } = await supabase
+      .from('places')
+      .select(`
+        *,
+        collection:collections(id, name, color, icon)
+      `)
+      .is('deleted_at', null)
+      .not('lat', 'is', null)
+      .not('lng', 'is', null);
+
+    if (error) {
+      console.error('Supabase error checking duplicates:', error);
+      return { success: false, isDuplicate: false, error: 'Failed to check for duplicates' };
+    }
+
+    // Find any place within the threshold distance
+    for (const place of data as PlaceWithCollection[]) {
+      if (place.lat !== null && place.lng !== null) {
+        const distance = calculateDistance(lat, lng, place.lat, place.lng);
+        if (distance <= thresholdMeters) {
+          return {
+            success: true,
+            isDuplicate: true,
+            existingPlace: place,
+            matchType: 'coordinates',
+          };
+        }
+      }
+    }
+
+    return { success: true, isDuplicate: false };
+  } catch (err) {
+    console.error('Error checking duplicate by coordinates:', err);
+    return { success: false, isDuplicate: false, error: 'An unexpected error occurred' };
+  }
+}
+
+/**
+ * Check for duplicate place by Google Maps URL
+ */
+export async function checkDuplicateByUrl(
+  googleMapsUrl: string
+): Promise<DuplicateCheckResult> {
+  if (!googleMapsUrl) {
+    return { success: true, isDuplicate: false };
+  }
+
+  try {
+    // Look for exact URL match
+    const { data, error } = await supabase
+      .from('places')
+      .select(`
+        *,
+        collection:collections(id, name, color, icon)
+      `)
+      .eq('google_maps_url', googleMapsUrl)
+      .is('deleted_at', null)
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 is "no rows returned" - not an error for our purposes
+      console.error('Supabase error checking URL duplicates:', error);
+      return { success: false, isDuplicate: false, error: 'Failed to check for duplicates' };
+    }
+
+    if (data) {
+      return {
+        success: true,
+        isDuplicate: true,
+        existingPlace: data as PlaceWithCollection,
+        matchType: 'url',
+      };
+    }
+
+    return { success: true, isDuplicate: false };
+  } catch (err) {
+    console.error('Error checking duplicate by URL:', err);
+    return { success: false, isDuplicate: false, error: 'An unexpected error occurred' };
+  }
+}
+
+/**
+ * Check for duplicates by both coordinates and URL
+ */
+export async function checkForDuplicates(
+  lat: number | null,
+  lng: number | null,
+  googleMapsUrl: string | null
+): Promise<DuplicateCheckResult> {
+  // First check by URL (exact match is more reliable)
+  if (googleMapsUrl) {
+    const urlResult = await checkDuplicateByUrl(googleMapsUrl);
+    if (!urlResult.success || urlResult.isDuplicate) {
+      return urlResult;
+    }
+  }
+
+  // Then check by coordinates
+  if (lat !== null && lng !== null) {
+    const coordResult = await checkDuplicateByCoordinates(lat, lng);
+    return coordResult;
+  }
+
+  return { success: true, isDuplicate: false };
+}
+
 /**
  * Fetch all places with their collection and tags data
  */

@@ -7,12 +7,72 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Current Status
 **Last Updated**: 2026-01-22
-**Current Phase**: Phase 10 COMPLETE
-**Next Step**: Phase 11.1 - Desktop Right-Click Menu
+**Current Phase**: Phase 13 COMPLETE
+**Next Step**: Phase 14.1 - Export JSON
 
 ---
 
 ## Completed Tasks
+
+### Phase 13: Duplicate Detection (COMPLETE)
+- [x] 13.1 Check by Coordinates - src/app/actions/places.ts
+  - checkDuplicateByCoordinates() function using Haversine formula
+  - calculateDistance() helper to compute distance in meters
+  - Default threshold of 50 meters
+  - Returns existing place if duplicate found
+- [x] 13.2 Check by URL - src/app/actions/places.ts
+  - checkDuplicateByUrl() function for exact URL matching
+  - checkForDuplicates() combines both checks (URL first, then coordinates)
+- [x] 13.3 Warning UI - src/components/DuplicateWarningModal.tsx
+  - Shows warning with existing place info (name, address, collection)
+  - Explains match type (coordinates vs URL)
+  - "Add Anyway" and "Cancel" options
+  - Integrated into both paste and manual entry flows in Layout.tsx
+  - Pending place data stored while waiting for user decision
+
+### Phase 12: Manual Place Entry (COMPLETE)
+- [x] 12.1 Add Manually Button - src/components/Layout.tsx
+  - MapPinPlus icon button in top bar
+  - "Add Place" label on desktop, icon-only on mobile
+  - Opens ManualPlaceModal
+- [x] 12.2 Manual Entry Form - src/components/ManualPlaceModal.tsx
+  - Name field (required) with validation
+  - Address field (required) with validation and geocoding hint
+  - Notes field (optional) with textarea
+  - Tags field (optional) using TagInput component
+  - Collection dropdown selector (same as AddPlaceModal)
+  - Form validation with touched state tracking
+  - Error display for geocoding failures
+- [x] 12.3 Geocode Address - src/lib/geocoding.ts
+  - forwardGeocode() already implemented in Phase 4
+  - Uses OpenStreetMap Nominatim API
+  - Returns PlaceInfo with lat, lng, and formatted address
+- [x] 12.4 Save Manual Place
+  - Creates place with geocoded coordinates
+  - Saves notes and tags
+  - Shows success toast on completion
+  - Refreshes map markers
+
+### Phase 11: Context Menu (COMPLETE)
+- [x] 11.1 Desktop Right-Click Menu - src/components/MapMarker.tsx
+  - onContextMenu handler on marker div
+  - Prevents default browser context menu
+  - Passes placeId and cursor position to callback
+- [x] 11.2 Mobile Long-Press Menu - src/components/MapMarker.tsx
+  - onTouchStart starts 500ms timer
+  - onTouchMove cancels if moved > 10px
+  - onTouchEnd/onTouchCancel clears timer
+  - longPressTriggered ref prevents click after long press
+- [x] 11.3 Context Menu Actions - src/components/ContextMenu.tsx
+  - Edit: Opens EditPlaceModal with place data
+  - Move to: Submenu with all collections (except current)
+    - Updates place collection_id on selection
+  - Copy address: Copies to clipboard with "Copied!" feedback
+  - Get directions: Opens Google Maps directions in new tab
+  - Delete: Soft deletes place immediately
+  - Context menu positioned with viewport boundary detection
+  - Click-outside and Escape key to close
+  - Animated entrance with fade-in zoom
 
 ### Phase 10: List View (COMPLETE)
 - [x] 10.1 View Toggle - src/components/ViewToggle.tsx
@@ -664,6 +724,25 @@ Read this file at the start of each session to maintain context and avoid repeat
   - Connected collection/tag clicks in panel to filter actions
   - Parallel data fetching for places, collections, and tags
 
+### 2026-01-22 (Phase 11.1-11.3)
+- Created: src/components/ContextMenu.tsx (context menu component)
+- Modified: src/components/MapMarker.tsx (added onContextMenu, touch handlers for long press)
+- Modified: src/components/Map.tsx (added onMarkerContextMenu prop)
+- Modified: src/app/page.tsx (added context menu state and handlers)
+
+### 2026-01-22 (Phase 12.1-12.4)
+- Created: src/components/ManualPlaceModal.tsx (manual place entry form)
+- Modified: src/components/Layout.tsx (added manual place button and modal integration)
+
+### 2026-01-22 (Phase 13.1-13.3)
+- Modified: src/app/actions/places.ts (added duplicate detection functions)
+  - calculateDistance() for Haversine formula
+  - checkDuplicateByCoordinates() for ~50m proximity check
+  - checkDuplicateByUrl() for exact URL match
+  - checkForDuplicates() combines both checks
+- Created: src/components/DuplicateWarningModal.tsx (duplicate warning UI)
+- Modified: src/components/Layout.tsx (integrated duplicate detection)
+
 ---
 
 ## Learnings
@@ -689,12 +768,10 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ## Next Steps (from roadmap.md)
 
-1. Phase 11.1: Desktop Right-Click Menu
-2. Phase 11.2: Mobile Long-Press Menu
-3. Phase 11.3: Context Menu Actions
-4. Phase 12: Manual Place Entry
-5. Phase 13: Duplicate Detection
-6. Phase 14: Export & Import
-7. Phase 15: PWA & Share Sheet
+1. Phase 14: PWA & Share Sheet
+2. Phase 15: Polish & Edge Cases
+3. Phase 16: Deployment
+
+Note: Export & Import moved to future features.
 
 Reference: docs/roadmap.md for full task breakdown

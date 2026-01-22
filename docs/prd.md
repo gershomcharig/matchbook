@@ -11,7 +11,7 @@ Matchbook is a personal place-saving app that makes it effortless to collect and
 - **Smart organization**: Group places into customizable collections with colored pins and icons
 - **Flexible browsing**: View places on a map or as a list, filter by collection or tags, search across everything
 - **Travel-ready**: Mobile-first PWA that works great on your phone while exploring a new city
-- **Your data, your way**: Export to JSON or CSV for backup or further use
+- **Your data**: Places stored securely with soft-delete and 30-day trash recovery
 
 ## Target User
 
@@ -83,11 +83,6 @@ When viewing a place, display:
 - Move places between collections
 - Soft delete: deleted places go to trash, recoverable for 30 days
 
-### Export & Backup
-- Export to JSON format (serves as both data export and backup)
-- Import from JSON to restore data
-- Export to CSV/spreadsheet format
-
 ### Authentication
 - Simple password protection (single password for app access)
 - Password set during initial setup
@@ -120,14 +115,15 @@ When viewing a place, display:
 
 (Not in initial release)
 
-1. **Full authentication**: Proper login system with email/password for multi-user support
-2. **Place thumbnails**: Save photos of places
-3. **Distance sorting**: Sort by distance from current GPS location
-4. **Custom ordering**: Drag-and-drop manual arrangement of places
-5. **Center on user location**: Default map view option to center on GPS
-6. **Web scraping for articles**: Paste article link, extract list of places immediately
-7. **Multi-collection places**: Places belonging to more than one collection
-8. **Additional export formats**: PDF/printable, Google Maps list
-9. **Pin clustering**: Group nearby pins when zoomed out (optional toggle)
-10. **Keyboard shortcuts**: V for view toggle, / for search, Escape to close, etc.
-11. **Read Later for articles**: Save article links to process later (alternative to immediate extraction)
+1. **Export & Import**: Export to JSON/CSV for backup, import from JSON to restore
+2. **Full authentication**: Proper login system with email/password for multi-user support
+3. **Place thumbnails**: Save photos of places
+4. **Distance sorting**: Sort by distance from current GPS location
+5. **Custom ordering**: Drag-and-drop manual arrangement of places
+6. **Center on user location**: Default map view option to center on GPS
+7. **Web scraping for articles**: Paste article link, extract list of places immediately
+8. **Multi-collection places**: Places belonging to more than one collection
+9. **Additional export formats**: PDF/printable, Google Maps list
+10. **Pin clustering**: Group nearby pins when zoomed out (optional toggle)
+11. **Keyboard shortcuts**: V for view toggle, / for search, Escape to close, etc.
+12. **Read Later for articles**: Save article links to process later (alternative to immediate extraction)

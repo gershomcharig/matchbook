@@ -500,174 +500,144 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 ## Phase 11: Context Menu
 
 ### 11.1 Desktop Right-Click Menu
-- [ ] Add right-click handler to markers
-- [ ] Show context menu at cursor position
-- [ ] **Test**: Right-click marker → menu appears
+- [x] Add right-click handler to markers
+- [x] Show context menu at cursor position
+- [x] **Test**: Right-click marker → menu appears
 
 ### 11.2 Mobile Long-Press Menu
-- [ ] Add long-press handler to markers
-- [ ] Show context menu
-- [ ] **Test**: Long-press → menu appears
+- [x] Add long-press handler to markers
+- [x] Show context menu
+- [x] **Test**: Long-press → menu appears
 
 ### 11.3 Context Menu Actions
-- [ ] Add actions: Edit, Move to..., Copy address, Navigate, Delete
-- [ ] Wire up each action
-- [ ] **Test**: Each action works
+- [x] Add actions: Edit, Move to..., Copy address, Navigate, Delete
+- [x] Wire up each action
+- [x] **Test**: Each action works
 
 ---
 
 ## Phase 12: Manual Place Entry
 
 ### 12.1 Add Manually Button
-- [ ] Add "Add place manually" button (in menu or floating)
-- [ ] **Test**: Button visible
+- [x] Add "Add place manually" button (in menu or floating)
+- [x] **Test**: Button visible
 
 ### 12.2 Manual Entry Form
-- [ ] Create form: name (required), address (required)
-- [ ] Optional: notes, tags, collection
-- [ ] **Test**: Form renders
+- [x] Create form: name (required), address (required)
+- [x] Optional: notes, tags, collection
+- [x] **Test**: Form renders
 
 ### 12.3 Geocode Address
-- [ ] Use geocoding service to convert address to coordinates
-- [ ] **Test**: Address → lat/lng
+- [x] Use geocoding service to convert address to coordinates
+- [x] **Test**: Address → lat/lng
 
 ### 12.4 Save Manual Place
-- [ ] Save to database
-- [ ] Show on map
-- [ ] **Test**: Manually added place appears on map
+- [x] Save to database
+- [x] Show on map
+- [x] **Test**: Manually added place appears on map
 
 ---
 
 ## Phase 13: Duplicate Detection
 
 ### 13.1 Check by Coordinates
-- [ ] Before saving, check for nearby existing place (within ~50m)
-- [ ] **Test**: Finds duplicate by location
+- [x] Before saving, check for nearby existing place (within ~50m)
+- [x] **Test**: Finds duplicate by location
 
 ### 13.2 Check by URL
-- [ ] Check for matching Google Maps URL
-- [ ] **Test**: Finds duplicate by URL
+- [x] Check for matching Google Maps URL
+- [x] **Test**: Finds duplicate by URL
 
 ### 13.3 Warning UI
-- [ ] Show warning: "This place may already exist in [Collection]"
-- [ ] Options: "Add anyway" or "Cancel"
-- [ ] **Test**: Warning appears for duplicates
+- [x] Show warning: "This place may already exist in [Collection]"
+- [x] Options: "Add anyway" or "Cancel"
+- [x] **Test**: Warning appears for duplicates
 
 ---
 
-## Phase 14: Export & Import
+## Phase 14: PWA & Share Sheet
 
-### 14.1 Export JSON
-- [ ] Add export button in settings/menu
-- [ ] Gather all data (places, collections, tags)
-- [ ] Download as JSON file
-- [ ] **Test**: File downloads with correct data
-
-### 14.2 Export CSV
-- [ ] Add CSV export option
-- [ ] Flatten data for spreadsheet format
-- [ ] **Test**: CSV opens correctly in Excel/Sheets
-
-### 14.3 Import JSON - UI
-- [ ] Add import option
-- [ ] File picker for JSON
-- [ ] **Test**: Can select file
-
-### 14.4 Import JSON - Validation
-- [ ] Parse and validate JSON structure
-- [ ] Show preview of what will be imported
-- [ ] **Test**: Invalid JSON shows error
-
-### 14.5 Import JSON - Save
-- [ ] Import collections, places, tags
-- [ ] Handle potential conflicts
-- [ ] **Test**: Imported data appears in app
-
----
-
-## Phase 15: PWA & Share Sheet
-
-### 15.1 Manifest File
+### 14.1 Manifest File
 - [ ] Create `manifest.json` with app name, theme colors
 - [ ] Link in `<head>`
 - [ ] **Test**: Chrome DevTools shows manifest
 
-### 15.2 App Icons
+### 14.2 App Icons
 - [ ] Create/generate icons in required sizes (192x192, 512x512, etc.)
 - [ ] Add to manifest
 - [ ] **Test**: Icons show in manifest
 
-### 15.3 Service Worker
+### 14.3 Service Worker
 - [ ] Set up basic service worker (for installability)
 - [ ] Register in app
 - [ ] **Test**: SW registered in DevTools
 
-### 15.4 Install Prompt
+### 14.4 Install Prompt
 - [ ] App should be installable
 - [ ] Add "Install" instructions or prompt
 - [ ] **Test**: Can install app on Android
 
-### 15.5 Share Target - Config
+### 14.5 Share Target - Config
 - [ ] Add share_target to manifest
 - [ ] Configure to receive shared URLs
 - [ ] **Test**: Manifest shows share target config
 
-### 15.6 Share Target - Handler
+### 14.6 Share Target - Handler
 - [ ] Create handler for received shared links
 - [ ] Trigger add place flow
 - [ ] **Test**: Share from Google Maps → Matchbook opens with link
 
-### 15.7 Paste Button (Mobile)
+### 14.7 Paste Button (Mobile)
 - [ ] Add visible paste button on mobile
 - [ ] On tap, read clipboard and process
 - [ ] **Test**: Paste button works on mobile
 
 ---
 
-## Phase 16: Polish & Edge Cases
+## Phase 15: Polish & Edge Cases
 
-### 16.1 Loading States
+### 15.1 Loading States
 - [ ] Add loading spinners/skeletons for async operations
 - [ ] **Test**: Loading visible during fetches
 
-### 16.2 Error Messages
+### 15.2 Error Messages
 - [ ] User-friendly error messages for all failures
 - [ ] **Test**: Errors are clear and helpful
 
-### 16.3 Empty States
+### 15.3 Empty States
 - [ ] Empty state for: no places, no collections, no search results, empty trash
 - [ ] **Test**: Each empty state looks good
 
-### 16.4 Soft Limits Warning
+### 15.4 Soft Limits Warning
 - [ ] Check data size on load
 - [ ] Warn if approaching performance limits
 - [ ] **Test**: Warning appears with lots of data
 
-### 16.5 Responsive Review
+### 15.5 Responsive Review
 - [ ] Test all screens on mobile, tablet, desktop
 - [ ] Fix any layout issues
 - [ ] **Test**: App looks good at all sizes
 
-### 16.6 Accessibility
+### 15.6 Accessibility
 - [ ] Keyboard navigation works
 - [ ] Screen reader basics
 - [ ] **Test**: Can use app with keyboard
 
 ---
 
-## Phase 17: Deployment
+## Phase 16: Deployment
 
-### 17.1 Vercel Setup
+### 16.1 Vercel Setup
 - [ ] Connect repo to Vercel
 - [ ] Configure environment variables
 - [ ] **Test**: Build succeeds
 
-### 17.2 Production Test
+### 16.2 Production Test
 - [ ] Test deployed app
 - [ ] Check all features work
 - [ ] **Test**: Full user flow works in production
 
-### 17.3 PWA Production Test
+### 16.3 PWA Production Test
 - [ ] Test PWA install on Android
 - [ ] Test Share Target
 - [ ] **Test**: Share from Google Maps works
@@ -678,6 +648,8 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 
 Not in v1 - documented for later.
 
+- Export to JSON (backup) and CSV
+- Import from JSON backup
 - Full authentication (email/password, multi-user)
 - Place thumbnails
 - Distance sorting (GPS)
