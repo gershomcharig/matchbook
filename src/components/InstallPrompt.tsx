@@ -14,6 +14,14 @@ export function InstallPrompt() {
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
+    // Only show on mobile devices - PWA install is primarily for Android share sheet
+    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+    if (!isMobile) {
+      return;
+    }
+
     // Check if already installed or dismissed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       return; // Already installed as PWA
