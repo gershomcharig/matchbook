@@ -9,7 +9,7 @@ Matchbook is a personal place-saving app that makes it effortless to collect and
 **Key features**:
 - **Effortless saving**: Paste links or share from Google Maps to instantly save places
 - **Smart organization**: Group places into customizable collections with colored pins and icons
-- **Flexible browsing**: Map view with side panel for exploring collections and places as lists
+- **Flexible browsing**: Map view with slide-up panels for exploring collections and places as lists
 - **Travel-ready**: Mobile-first PWA that works great on your phone while exploring a new city
 - **Your data**: Places stored securely with soft-delete and 30-day trash recovery
 
@@ -31,13 +31,13 @@ Single user (personal use). The app will be password-protected to keep data priv
 ### Map View (Main View)
 - Displays saved places as colored pins on a Mapbox map
 - Each collection has a customizable pin color and icon (from an icon library, ~50-80 icons)
-- Clicking a pin opens place details in a panel (slide-up on mobile, side panel on desktop)
+- Clicking a pin opens place details in a slide-up panel
 - Default view: zoom to show all saved places (empty state: centered on London, UK)
 - **Filtering**:
-  - Select a collection in the side panel to filter map to only those places
+  - Select a collection in the collections panel to filter map to only those places
   - Filter by tags via the filter bar
   - Global search across place names, notes, and tags
-- Context menu (right-click desktop, long-press mobile): Edit, Move to collection, Copy address, Navigate, Delete
+- Context menu (long-press on mobile): Edit, Move to collection, Copy address, Navigate, Delete
 - Color palette for pins: ~12-16 curated preset colors
 
 ### Place Details
@@ -67,7 +67,7 @@ When viewing a place, display:
 - **Duplicates**: Warn if place already exists (by coordinates or link) but allow adding anyway
 
 ### Collections Panel (Primary Navigation)
-The collections panel is the main way to explore places in list format. It appears as a side panel on desktop and can be opened on mobile.
+The collections panel is the main way to explore places in list format. It opens as a slide-up panel from the bottom of the screen.
 
 - **Collections list**: Shows all collections with place counts
 - **Collection drill-down**: Click a collection to:
@@ -105,7 +105,7 @@ The collections panel is the main way to explore places in list format. It appea
 
 - **Minimal & clean**: Simple UI, lots of white space, focus on map and content
 - **No visible branding**: Functional UI without prominent app name/logo
-- **Mobile-first**: Optimized for phone use while traveling, scales up for desktop
+- **Mobile-first**: Single mobile-optimized interface (slide-up panels, floating buttons). Works on desktop by resizing the browser window.
 - **Online only**: Requires internet connection (no offline support)
 
 ## Empty State

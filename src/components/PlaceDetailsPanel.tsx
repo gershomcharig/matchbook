@@ -45,15 +45,6 @@ export default function PlaceDetailsPanel({
   onEdit,
 }: PlaceDetailsPanelProps) {
   const [copied, setCopied] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Check screen size for responsive behavior
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Reset copied state when place changes
   useEffect(() => {
@@ -283,45 +274,32 @@ export default function PlaceDetailsPanel({
     </div>
   );
 
-  // Mobile: Slide-up panel
-  if (isMobile) {
-    return (
-      <div
-        className={`fixed inset-0 z-50 transition-opacity duration-200 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-      >
-        {/* Backdrop */}
-        <div
-          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-          onClick={onClose}
-        />
-
-        {/* Panel */}
-        <div
-          className={`absolute bottom-0 left-0 right-0 max-h-[85vh] bg-white dark:bg-zinc-900 rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out ${
-            isOpen ? 'translate-y-0' : 'translate-y-full'
-          }`}
-        >
-          {/* Drag handle */}
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-          </div>
-
-          {panelContent}
-        </div>
-      </div>
-    );
-  }
-
-  // Desktop: Side panel (overlays the collections sidebar)
+  // Slide-up panel
   return (
     <div
-      className={`fixed top-0 right-0 h-full w-[380px] bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-xl z-40 transform transition-transform duration-300 ease-out ${
-        isOpen ? 'translate-x-0' : 'translate-x-full'
+      className={`fixed inset-0 z-50 transition-opacity duration-200 ${
+        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
     >
-      {panelContent}
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Panel */}
+      <div
+        className={`absolute bottom-0 left-0 right-0 max-h-[85vh] bg-white dark:bg-zinc-900 rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out ${
+          isOpen ? 'translate-y-0' : 'translate-y-full'
+        }`}
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+        </div>
+
+        {panelContent}
+      </div>
     </div>
   );
 }

@@ -15,8 +15,7 @@ const LONDON_CENTER = {
 const INITIAL_ZOOM = 11;
 
 // Padding for fitBounds (pixels)
-const FIT_BOUNDS_PADDING = { top: 80, bottom: 80, left: 80, right: 400 };
-const FIT_BOUNDS_PADDING_MOBILE = { top: 80, bottom: 80, left: 40, right: 40 };
+const FIT_BOUNDS_PADDING = { top: 80, bottom: 80, left: 40, right: 40 };
 
 interface MapProps {
   /** Places to display as markers */
@@ -81,12 +80,8 @@ export default function Map({ places = [], onMarkerClick, onMarkerContextMenu, f
       [Math.max(...lngs), Math.max(...lats)],
     ];
 
-    // Use responsive padding (more for desktop sidebar)
-    const isMobile = window.innerWidth < 1024;
-    const padding = isMobile ? FIT_BOUNDS_PADDING_MOBILE : FIT_BOUNDS_PADDING;
-
     mapRef.current.fitBounds(bounds, {
-      padding,
+      padding: FIT_BOUNDS_PADDING,
       duration: 1000,
       maxZoom: 16,
     });

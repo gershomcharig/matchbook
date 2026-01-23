@@ -14,7 +14,6 @@ import DuplicateWarningModal from './DuplicateWarningModal';
 import { InstallPrompt } from './InstallPrompt';
 import CollectionsList from './CollectionsList';
 import CollectionPlacesList from './CollectionPlacesList';
-import SidePanel from './SidePanel';
 import { createCollection, updateCollection, deleteCollection, getCollectionPlaceCounts, type Collection } from '@/app/actions/collections';
 import { createPlace, updatePlaceTags, checkForDuplicates, type PlaceWithCollection } from '@/app/actions/places';
 import { forwardGeocode } from '@/lib/geocoding';
@@ -22,7 +21,6 @@ import { ToastContainer, generateToastId, type ToastData } from './Toast';
 
 interface LayoutProps {
   children: ReactNode;
-  sidePanel?: ReactNode;
   onCollectionSelected?: (collection: Collection) => void;
   /** Callback when a place is added */
   onPlaceAdded?: () => void;
@@ -32,19 +30,18 @@ interface LayoutProps {
   sharedPlace?: ExtractedPlace | null;
   /** Callback to clear shared place after handling */
   onSharedPlaceHandled?: () => void;
-  /** All places data for the side panel */
+  /** All places data for collections panel */
   places?: PlaceWithCollection[];
-  /** Callback when a place is clicked in the side panel */
+  /** Callback when a place is clicked in the collections panel */
   onPlaceClick?: (placeId: string) => void;
-  /** Callback when collection filter changes from side panel drill-down */
-  onSidePanelCollectionFilter?: (collectionId: string | null) => void;
+  /** Callback when collection filter changes from panel drill-down */
+  onCollectionFilterChange?: (collectionId: string | null) => void;
   /** Currently selected place ID */
   selectedPlaceId?: string | null;
 }
 
 export default function Layout({
   children,
-  sidePanel,
   onCollectionSelected,
   onPlaceAdded,
   onFocusCollection,
@@ -52,18 +49,18 @@ export default function Layout({
   onSharedPlaceHandled,
   places = [],
   onPlaceClick,
-  onSidePanelCollectionFilter,
+  onCollectionFilterChange,
   selectedPlaceId,
 }: LayoutProps) {
   const router = useRouter();
   const [isNewCollectionOpen, setIsNewCollectionOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isMobileCollectionsOpen, setIsMobileCollectionsOpen] = useState(false);
+  const [isCollectionsOpen, setIsCollectionsOpen] = useState(false);
   const [collectionsRefreshTrigger, setCollectionsRefreshTrigger] = useState(0);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | undefined>();
 
-  // Mobile panel drill-down state
-  const [mobileSelectedCollection, setMobileSelectedCollection] = useState<Collection | null>(null);
+  // Collections panel drill-down state
+  const [selectedCollectionForDrilldown, setSelectedCollectionForDrilldown] = useState<Collection | null>(null);
 
   // Edit Collection modal state
   const [isEditCollectionOpen, setIsEditCollectionOpen] = useState(false);
@@ -144,38 +141,38 @@ export default function Layout({
     (collection: Collection) => {
       setSelectedCollectionId(collection.id);
       // For mobile: drill down into collection places list
-      setMobileSelectedCollection(collection);
+      setSelectedCollectionForDrilldown(collection);
       // Filter the map to this collection
-      onSidePanelCollectionFilter?.(collection.id);
+      onCollectionFilterChange?.(collection.id);
       onCollectionSelected?.(collection);
     },
-    [onCollectionSelected, onSidePanelCollectionFilter]
+    [onCollectionSelected, onCollectionFilterChange]
   );
 
-  // Handle going back from collection places list in mobile
-  const handleMobileBack = useCallback(() => {
-    setMobileSelectedCollection(null);
-    onSidePanelCollectionFilter?.(null);
-  }, [onSidePanelCollectionFilter]);
+  // Handle going back from collection places list
+  const handleBack = useCallback(() => {
+    setSelectedCollectionForDrilldown(null);
+    onCollectionFilterChange?.(null);
+  }, [onCollectionFilterChange]);
 
-  // Handle place click in mobile collection places list
-  const handleMobilePlaceClick = useCallback(
+  // Handle place click in collection places list
+  const handlePlaceClickInList = useCallback(
     (placeId: string) => {
-      setIsMobileCollectionsOpen(false);
+      setIsCollectionsOpen(false);
       onPlaceClick?.(placeId);
     },
     [onPlaceClick]
   );
 
   const handleOpenNewCollection = () => {
-    setIsMobileCollectionsOpen(false);
+    setIsCollectionsOpen(false);
     setIsNewCollectionOpen(true);
   };
 
   // Handle opening edit collection modal
   const handleEditCollection = useCallback(async (collection: Collection) => {
     setEditingCollection(collection);
-    setIsMobileCollectionsOpen(false);
+    setIsCollectionsOpen(false);
 
     // Fetch place count for this collection
     const result = await getCollectionPlaceCounts();
@@ -226,7 +223,7 @@ export default function Layout({
 
   // Handle focus on collection (zoom map to its places)
   const handleFocusCollection = useCallback((collection: Collection) => {
-    setIsMobileCollectionsOpen(false);
+    setIsCollectionsOpen(false);
     onFocusCollection?.(collection.id);
   }, [onFocusCollection]);
 
@@ -443,7 +440,7 @@ export default function Layout({
     }
   }, [sharedPlace, onSharedPlaceHandled]);
 
-  // Handle paste button click (for mobile)
+  // Handle paste button click
   const handlePasteButtonClick = async () => {
     try {
       // Request clipboard permission and read text
@@ -628,10 +625,10 @@ export default function Layout({
       <div className="flex-1 relative">
         {/* Top bar buttons */}
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-          {/* Mobile: Collections toggle button */}
+          {/* Collections toggle button */}
           <button
-            onClick={() => setIsMobileCollectionsOpen(true)}
-            className="lg:hidden flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50"
+            onClick={() => setIsCollectionsOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50"
             title="Collections"
           >
             <Layers className="w-4 h-4" />
@@ -714,18 +711,18 @@ export default function Layout({
         placeCount={editingCollectionPlaceCount}
       />
 
-      {/* Mobile Collections Panel (slide-up) */}
-      {isMobileCollectionsOpen && (
-        <div className="lg:hidden fixed inset-0 z-50">
+      {/* Collections Panel (slide-up) */}
+      {isCollectionsOpen && (
+        <div className="fixed inset-0 z-50">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => {
-              setIsMobileCollectionsOpen(false);
+              setIsCollectionsOpen(false);
               // Reset drill-down state when closing
-              if (mobileSelectedCollection) {
-                setMobileSelectedCollection(null);
-                onSidePanelCollectionFilter?.(null);
+              if (selectedCollectionForDrilldown) {
+                setSelectedCollectionForDrilldown(null);
+                onCollectionFilterChange?.(null);
               }
             }}
           />
@@ -737,12 +734,12 @@ export default function Layout({
             </div>
             {/* Content */}
             <div className="overflow-y-auto max-h-[calc(70vh-48px)]">
-              {mobileSelectedCollection ? (
+              {selectedCollectionForDrilldown ? (
                 <CollectionPlacesList
-                  collection={mobileSelectedCollection}
-                  places={places.filter((p) => p.collection_id === mobileSelectedCollection.id)}
-                  onBack={handleMobileBack}
-                  onPlaceClick={handleMobilePlaceClick}
+                  collection={selectedCollectionForDrilldown}
+                  places={places.filter((p) => p.collection_id === selectedCollectionForDrilldown.id)}
+                  onBack={handleBack}
+                  onPlaceClick={handlePlaceClickInList}
                   onEditCollection={handleEditCollection}
                   selectedPlaceId={selectedPlaceId}
                 />
@@ -761,27 +758,11 @@ export default function Layout({
         </div>
       )}
 
-      {/* Desktop Side Panel */}
-      <div className="hidden lg:block w-[320px] border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-y-auto">
-        {sidePanel || (
-          <SidePanel
-            places={places}
-            onNewCollection={() => setIsNewCollectionOpen(true)}
-            onEditCollection={handleEditCollection}
-            onFocusCollection={handleFocusCollection}
-            onPlaceClick={onPlaceClick || (() => {})}
-            onCollectionFilterChange={onSidePanelCollectionFilter || (() => {})}
-            selectedPlaceId={selectedPlaceId}
-            collectionsRefreshTrigger={collectionsRefreshTrigger}
-          />
-        )}
-      </div>
-
       {/* Install Prompt */}
       <InstallPrompt />
 
-      {/* Mobile Paste Button - floating at bottom center */}
-      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-20">
+      {/* Paste Button - floating at bottom center */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20">
         <button
           onClick={handlePasteButtonClick}
           className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold shadow-xl shadow-amber-500/30 hover:shadow-amber-500/50 hover:from-amber-400 hover:to-orange-400 active:scale-95 transition-all"

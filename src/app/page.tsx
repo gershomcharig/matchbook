@@ -268,8 +268,8 @@ function HomeContent() {
     setSearchQuery('');
   }, []);
 
-  // Handle side panel collection filter (from drilling into a collection)
-  const handleSidePanelCollectionFilter = useCallback(
+  // Handle collection filter change (from drilling into a collection)
+  const handleCollectionFilterChange = useCallback(
     (collectionId: string | null) => {
       if (collectionId) {
         // Filter to this collection only
@@ -412,7 +412,7 @@ function HomeContent() {
       onSharedPlaceHandled={handleSharedPlaceHandled}
       places={places}
       onPlaceClick={handlePlaceClick}
-      onSidePanelCollectionFilter={handleSidePanelCollectionFilter}
+      onCollectionFilterChange={handleCollectionFilterChange}
       selectedPlaceId={selectedPlace?.id}
     >
       {/* Filter bar and view toggle */}
@@ -437,7 +437,7 @@ function HomeContent() {
 
       {/* Soft limit warning banner */}
       {showSoftLimitWarning && (
-        <div className="absolute bottom-20 lg:bottom-4 left-4 right-4 lg:left-auto lg:right-[340px] z-20 max-w-md">
+        <div className="absolute bottom-20 left-4 right-4 z-20 max-w-md mx-auto">
           <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-50/95 dark:bg-amber-950/95 backdrop-blur-sm border border-amber-200 dark:border-amber-800 shadow-lg">
             <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
