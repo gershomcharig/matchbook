@@ -157,7 +157,7 @@ export default function MapMarker({
 
         {/* Icon positioned in the center of the pin */}
         <div
-          className="absolute top-[6px] left-1/2 -translate-x-1/2 flex items-center justify-center"
+          className="absolute top-[4px] left-1/2 -translate-x-1/2 flex items-center justify-center"
           style={{ width: '20px', height: '20px' }}
         >
           {IconComponent && (
