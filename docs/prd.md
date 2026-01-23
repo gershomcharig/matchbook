@@ -50,7 +50,7 @@ When viewing a place, display:
 - Opening hours (if available)
 - Website (if available)
 - Phone number (if available)
-- Collection it belongs to (clickable - navigates to that collection's places on map)
+- Collection it belongs to (clickable - filters map to that collection)
 - User-added notes (plain text)
 - User-added tags (free-form, clickable - filters map view by that tag)
 - Button to open navigation (Google Maps or other apps)
@@ -77,6 +77,10 @@ When viewing a place, display:
 - Create, edit, delete collections
 - Customize: name, pin color (preset palette), pin icon (from icon library)
 - One default "My Places" collection auto-created on first place add (can be renamed/deleted)
+- **Collection drill-down**: Click a collection in the side panel to:
+  - Show a list of places in that collection (with back button to return to collections list)
+  - Automatically filter map pins to only show places from that collection
+  - Works on both desktop (side panel) and mobile (slide-up panel)
 
 ### Place Management
 - Edit places: name, notes, tags, collection

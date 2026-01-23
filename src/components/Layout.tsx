@@ -13,6 +13,8 @@ import ManualPlaceModal from './ManualPlaceModal';
 import DuplicateWarningModal from './DuplicateWarningModal';
 import { InstallPrompt } from './InstallPrompt';
 import CollectionsList from './CollectionsList';
+import CollectionPlacesList from './CollectionPlacesList';
+import SidePanel from './SidePanel';
 import { createCollection, updateCollection, deleteCollection, getCollectionPlaceCounts, type Collection } from '@/app/actions/collections';
 import { createPlace, updatePlaceTags, checkForDuplicates, type PlaceWithCollection } from '@/app/actions/places';
 import { forwardGeocode } from '@/lib/geocoding';
@@ -30,15 +32,38 @@ interface LayoutProps {
   sharedPlace?: ExtractedPlace | null;
   /** Callback to clear shared place after handling */
   onSharedPlaceHandled?: () => void;
+  /** All places data for the side panel */
+  places?: PlaceWithCollection[];
+  /** Callback when a place is clicked in the side panel */
+  onPlaceClick?: (placeId: string) => void;
+  /** Callback when collection filter changes from side panel drill-down */
+  onSidePanelCollectionFilter?: (collectionId: string | null) => void;
+  /** Currently selected place ID */
+  selectedPlaceId?: string | null;
 }
 
-export default function Layout({ children, sidePanel, onCollectionSelected, onPlaceAdded, onFocusCollection, sharedPlace, onSharedPlaceHandled }: LayoutProps) {
+export default function Layout({
+  children,
+  sidePanel,
+  onCollectionSelected,
+  onPlaceAdded,
+  onFocusCollection,
+  sharedPlace,
+  onSharedPlaceHandled,
+  places = [],
+  onPlaceClick,
+  onSidePanelCollectionFilter,
+  selectedPlaceId,
+}: LayoutProps) {
   const router = useRouter();
   const [isNewCollectionOpen, setIsNewCollectionOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMobileCollectionsOpen, setIsMobileCollectionsOpen] = useState(false);
   const [collectionsRefreshTrigger, setCollectionsRefreshTrigger] = useState(0);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | undefined>();
+
+  // Mobile panel drill-down state
+  const [mobileSelectedCollection, setMobileSelectedCollection] = useState<Collection | null>(null);
 
   // Edit Collection modal state
   const [isEditCollectionOpen, setIsEditCollectionOpen] = useState(false);
@@ -118,10 +143,28 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
   const handleSelectCollection = useCallback(
     (collection: Collection) => {
       setSelectedCollectionId(collection.id);
-      setIsMobileCollectionsOpen(false);
+      // For mobile: drill down into collection places list
+      setMobileSelectedCollection(collection);
+      // Filter the map to this collection
+      onSidePanelCollectionFilter?.(collection.id);
       onCollectionSelected?.(collection);
     },
-    [onCollectionSelected]
+    [onCollectionSelected, onSidePanelCollectionFilter]
+  );
+
+  // Handle going back from collection places list in mobile
+  const handleMobileBack = useCallback(() => {
+    setMobileSelectedCollection(null);
+    onSidePanelCollectionFilter?.(null);
+  }, [onSidePanelCollectionFilter]);
+
+  // Handle place click in mobile collection places list
+  const handleMobilePlaceClick = useCallback(
+    (placeId: string) => {
+      setIsMobileCollectionsOpen(false);
+      onPlaceClick?.(placeId);
+    },
+    [onPlaceClick]
   );
 
   const handleOpenNewCollection = () => {
@@ -697,7 +740,14 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setIsMobileCollectionsOpen(false)}
+            onClick={() => {
+              setIsMobileCollectionsOpen(false);
+              // Reset drill-down state when closing
+              if (mobileSelectedCollection) {
+                setMobileSelectedCollection(null);
+                onSidePanelCollectionFilter?.(null);
+              }
+            }}
           />
           {/* Panel */}
           <div className="absolute bottom-0 left-0 right-0 max-h-[70vh] bg-white dark:bg-zinc-900 rounded-t-3xl shadow-xl overflow-hidden animate-in slide-in-from-bottom duration-200">
@@ -707,14 +757,25 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
             </div>
             {/* Content */}
             <div className="overflow-y-auto max-h-[calc(70vh-48px)]">
-              <CollectionsList
-                onNewCollection={handleOpenNewCollection}
-                onSelectCollection={handleSelectCollection}
-                onEditCollection={handleEditCollection}
-                onFocusCollection={handleFocusCollection}
-                selectedId={selectedCollectionId}
-                refreshTrigger={collectionsRefreshTrigger}
-              />
+              {mobileSelectedCollection ? (
+                <CollectionPlacesList
+                  collection={mobileSelectedCollection}
+                  places={places.filter((p) => p.collection_id === mobileSelectedCollection.id)}
+                  onBack={handleMobileBack}
+                  onPlaceClick={handleMobilePlaceClick}
+                  onEditCollection={handleEditCollection}
+                  selectedPlaceId={selectedPlaceId}
+                />
+              ) : (
+                <CollectionsList
+                  onNewCollection={handleOpenNewCollection}
+                  onSelectCollection={handleSelectCollection}
+                  onEditCollection={handleEditCollection}
+                  onFocusCollection={handleFocusCollection}
+                  selectedId={selectedCollectionId}
+                  refreshTrigger={collectionsRefreshTrigger}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -723,13 +784,15 @@ export default function Layout({ children, sidePanel, onCollectionSelected, onPl
       {/* Desktop Side Panel */}
       <div className="hidden lg:block w-[320px] border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-y-auto">
         {sidePanel || (
-          <CollectionsList
+          <SidePanel
+            places={places}
             onNewCollection={() => setIsNewCollectionOpen(true)}
-            onSelectCollection={handleSelectCollection}
             onEditCollection={handleEditCollection}
             onFocusCollection={handleFocusCollection}
-            selectedId={selectedCollectionId}
-            refreshTrigger={collectionsRefreshTrigger}
+            onPlaceClick={onPlaceClick || (() => {})}
+            onCollectionFilterChange={onSidePanelCollectionFilter || (() => {})}
+            selectedPlaceId={selectedPlaceId}
+            collectionsRefreshTrigger={collectionsRefreshTrigger}
           />
         )}
       </div>

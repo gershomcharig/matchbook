@@ -273,6 +273,20 @@ function HomeContent() {
     setSearchQuery('');
   }, []);
 
+  // Handle side panel collection filter (from drilling into a collection)
+  const handleSidePanelCollectionFilter = useCallback(
+    (collectionId: string | null) => {
+      if (collectionId) {
+        // Filter to this collection only
+        setSelectedCollections([collectionId]);
+      } else {
+        // Clear collection filter when going back
+        setSelectedCollections([]);
+      }
+    },
+    []
+  );
+
   // Handle edit button click
   const handleEditClick = useCallback(() => {
     setIsEditModalOpen(true);
@@ -402,7 +416,16 @@ function HomeContent() {
     searchQuery.trim().length > 0;
 
   return (
-    <Layout onPlaceAdded={fetchData} onFocusCollection={handleFocusCollection} sharedPlace={sharedPlace} onSharedPlaceHandled={handleSharedPlaceHandled}>
+    <Layout
+      onPlaceAdded={fetchData}
+      onFocusCollection={handleFocusCollection}
+      sharedPlace={sharedPlace}
+      onSharedPlaceHandled={handleSharedPlaceHandled}
+      places={places}
+      onPlaceClick={handlePlaceClick}
+      onSidePanelCollectionFilter={handleSidePanelCollectionFilter}
+      selectedPlaceId={selectedPlace?.id}
+    >
       {/* Filter bar and view toggle */}
       <FilterBar
         collections={collections}
