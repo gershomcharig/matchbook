@@ -633,12 +633,12 @@ This roadmap sequences the build in small, testable steps. Each step should be c
 - [x] **Test**: Build succeeds
 
 ### 16.2 Production Test
-- [ ] Test deployed app
+- [x] Test deployed app
 - [ ] Check all features work
 - [ ] **Test**: Full user flow works in production
 
 ### 16.3 PWA Production Test
-- [ ] Test PWA install on Android
+- [x] Test PWA install on Android
 - [ ] Test Share Target
 - [ ] **Test**: Share from Google Maps works
 

@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Search,
   X,
   ChevronDown,
   Check,
@@ -90,18 +89,13 @@ export default function FilterBar({
     <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2" role="search" aria-label="Filter places">
       {/* Search input */}
       <div className="relative">
-        <Search
-          size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
-          aria-hidden="true"
-        />
         <input
           type="search"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search places..."
+          placeholder="Search..."
           aria-label="Search places by name, address, notes, or tags"
-          className="w-[180px] sm:w-[220px] pl-9 pr-8 py-2 rounded-xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50"
+          className="w-[180px] sm:w-[160px] pl-3 pr-2 py-2 rounded-xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50"
         />
         {searchQuery && (
           <button

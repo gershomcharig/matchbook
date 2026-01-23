@@ -174,13 +174,13 @@ function HomeContent() {
         }
       }
 
-      // Filter by tags (AND logic - place must have ALL selected tags)
+      // Filter by tags (OR logic - place must have ANY of the selected tags)
       if (selectedTags.length > 0) {
         const placeTags = placeTagsMap[place.id] || [];
-        const hasAllTags = selectedTags.every((tag) =>
+        const hasAnyTag = selectedTags.some((tag) =>
           placeTags.some((pt) => pt.toLowerCase() === tag.toLowerCase())
         );
-        if (!hasAllTags) {
+        if (!hasAnyTag) {
           return false;
         }
       }
