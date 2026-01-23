@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { MapPin, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
 import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl, isShortenedMapsUrl } from '@/lib/maps';
 import { expandShortenedMapsUrl } from '@/app/actions/urls';
-import { reverseGeocode } from '@/lib/geocoding';
+import { reverseGeocode, forwardGeocode } from '@/lib/geocoding';
 
 function ShareContent() {
   const router = useRouter();
@@ -57,16 +57,42 @@ function ShareContent() {
 
       setMessage('Extracting place information...');
 
+      // Extract place name from URL
+      const urlPlaceName = extractPlaceNameFromUrl(mapsUrl);
+
       // Extract coordinates
       const coordinates = extractCoordinatesFromUrl(mapsUrl);
+
       if (!coordinates) {
+        // Fallback: Try to use the place name if available (common for shared links without coordinates)
+        if (urlPlaceName) {
+          setMessage('Looking up place location...');
+          const placeInfo = await forwardGeocode(urlPlaceName);
+
+          if (placeInfo) {
+            const placeData = {
+              name: placeInfo.name,
+              address: placeInfo.address,
+              lat: placeInfo.lat,
+              lng: placeInfo.lng,
+              googleMapsUrl: mapsUrl,
+            };
+
+            sessionStorage.setItem('pendingSharedPlace', JSON.stringify(placeData));
+            setStatus('success');
+            setMessage('Place found! Redirecting...');
+
+            setTimeout(() => {
+              router.push('/?fromShare=true');
+            }, 500);
+            return;
+          }
+        }
+
         setStatus('error');
         setMessage('Could not extract location from the link.');
         return;
       }
-
-      // Extract place name from URL
-      const urlPlaceName = extractPlaceNameFromUrl(mapsUrl);
 
       // Get place info via geocoding
       setMessage('Getting place details...');
@@ -104,8 +130,8 @@ function ShareContent() {
           {/* Icon */}
           <div className="flex justify-center mb-6">
             <div className={`w-20 h-20 rounded-2xl flex items-center justify-center ${status === 'processing' ? 'bg-amber-100' :
-                status === 'success' ? 'bg-green-100' :
-                  'bg-red-100'
+              status === 'success' ? 'bg-green-100' :
+                'bg-red-100'
               }`}>
               {status === 'processing' ? (
                 <Loader2 className="w-10 h-10 text-amber-600 animate-spin" />

@@ -553,6 +553,33 @@ export default function Layout({
               showToast('error', 'Could not get place information. Please try again or add manually.');
             }
           } else {
+            // Fallback: Try to use the place name if available
+            if (urlPlaceName) {
+              console.log('[No coordinates, trying geocoding with name]', urlPlaceName);
+              showToast('info', `Found "${urlPlaceName}", looking up location...`);
+
+              const placeInfo = await forwardGeocode(urlPlaceName);
+
+              if (placeInfo) {
+                const extractedPlaceData: ExtractedPlace = {
+                  name: placeInfo.name,
+                  address: placeInfo.address,
+                  lat: placeInfo.lat,
+                  lng: placeInfo.lng,
+                  googleMapsUrl: finalUrl,
+                  urlExtractedName: urlPlaceName,
+                  geocodedName: placeInfo.name,
+                  displayName: placeInfo.displayName,
+                  placeType: placeInfo.placeType || null,
+                  city: placeInfo.city || null,
+                  country: placeInfo.country || null,
+                };
+                setExtractedPlace(extractedPlaceData);
+                setIsAddPlaceOpen(true);
+                return;
+              }
+            }
+
             showToast('error', 'Could not find location in URL. Try a different Google Maps link.');
           }
         } else {
@@ -663,6 +690,34 @@ export default function Layout({
               }
             }
           } else {
+            // Fallback: Try to use the place name if available
+            if (urlPlaceName) {
+              console.log('[No coordinates, trying geocoding with name]', urlPlaceName);
+              showToast('info', `Found "${urlPlaceName}", looking up location...`);
+
+              const placeInfo = await forwardGeocode(urlPlaceName);
+
+              if (placeInfo) {
+                const extractedPlaceData: ExtractedPlace = {
+                  name: placeInfo.name,
+                  address: placeInfo.address,
+                  lat: placeInfo.lat,
+                  lng: placeInfo.lng,
+                  googleMapsUrl: finalUrl,
+                  urlExtractedName: urlPlaceName,
+                  geocodedName: placeInfo.name,
+                  displayName: placeInfo.displayName,
+                  placeType: placeInfo.placeType || null,
+                  city: placeInfo.city || null,
+                  country: placeInfo.country || null,
+                };
+                console.log('[All Extracted Place Data (via fallback)]', extractedPlaceData);
+                setExtractedPlace(extractedPlaceData);
+                setIsAddPlaceOpen(true);
+                return;
+              }
+            }
+
             console.log('[No coordinates found in URL] Cannot extract place info');
             showToast('error', 'Could not find location in URL. Try a different Google Maps link.');
           }
