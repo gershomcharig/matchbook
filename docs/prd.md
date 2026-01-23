@@ -9,7 +9,7 @@ Matchbook is a personal place-saving app that makes it effortless to collect and
 **Key features**:
 - **Effortless saving**: Paste links or share from Google Maps to instantly save places
 - **Smart organization**: Group places into customizable collections with colored pins and icons
-- **Flexible browsing**: View places on a map or as a list, filter by collection or tags, search across everything
+- **Flexible browsing**: Map view with side panel for exploring collections and places as lists
 - **Travel-ready**: Mobile-first PWA that works great on your phone while exploring a new city
 - **Your data**: Places stored securely with soft-delete and 30-day trash recovery
 
@@ -29,15 +29,14 @@ Single user (personal use). The app will be password-protected to keep data priv
 ## Core Features
 
 ### Map View (Main View)
-- Displays all saved places as colored pins on a Mapbox map
+- Displays saved places as colored pins on a Mapbox map
 - Each collection has a customizable pin color and icon (from an icon library, ~50-80 icons)
-- Clicking a pin opens place details:
-  - Mobile: slide-up panel from bottom
-  - Desktop: side panel
+- Clicking a pin opens place details in a panel (slide-up on mobile, side panel on desktop)
 - Default view: zoom to show all saved places (empty state: centered on London, UK)
-- Filter places by collections or tags (AND logic for multiple filters)
-- Global search across place names, notes, and tags
-- Click collection name to zoom/fit all its places on map
+- **Filtering**:
+  - Select a collection in the side panel to filter map to only those places
+  - Filter by tags via the filter bar
+  - Global search across place names, notes, and tags
 - Context menu (right-click desktop, long-press mobile): Edit, Move to collection, Copy address, Navigate, Delete
 - Color palette for pins: ~12-16 curated preset colors
 
@@ -56,12 +55,6 @@ When viewing a place, display:
 - Button to open navigation (Google Maps or other apps)
 - Button to copy address to clipboard
 
-### List View
-- Alternative to map view: browse places as a list organized by collection
-- Sorting options:
-  - By date added (newest/oldest first)
-  - Alphabetically (A-Z / Z-A)
-
 ### Adding Places (Key Feature)
 - **Paste to add**: Simply pasting a Google Maps link anywhere in the app triggers place detection
 - Auto-extracts: place name, address, coordinates, Google Maps link, rating, opening hours, website, phone number
@@ -73,19 +66,28 @@ When viewing a place, display:
 - **Error handling**: If link processing fails, show error and offer manual entry fallback
 - **Duplicates**: Warn if place already exists (by coordinates or link) but allow adding anyway
 
-### Collections
+### Collections Panel (Primary Navigation)
+The collections panel is the main way to explore places in list format. It appears as a side panel on desktop and can be opened on mobile.
+
+- **Collections list**: Shows all collections with place counts
+- **Collection drill-down**: Click a collection to:
+  - Show a sorted list of places in that collection (newest, oldest, A-Z, Z-A)
+  - Automatically filter map pins to only show places from that collection
+  - Back button returns to collections list and clears filter
+- **Trash**: Appears as a special item at the bottom of the collections list
+  - Shows deleted places with days remaining until permanent deletion
+  - Restore or permanently delete places from trash
+  - Trashed places do not appear on the map
+
+### Collection Management
 - Create, edit, delete collections
 - Customize: name, pin color (preset palette), pin icon (from icon library)
 - One default "My Places" collection auto-created on first place add (can be renamed/deleted)
-- **Collection drill-down**: Click a collection in the side panel to:
-  - Show a list of places in that collection (with back button to return to collections list)
-  - Automatically filter map pins to only show places from that collection
-  - Works on both desktop (side panel) and mobile (slide-up panel)
 
 ### Place Management
 - Edit places: name, notes, tags, collection
 - Move places between collections
-- Soft delete: deleted places go to trash, recoverable for 30 days
+- Soft delete: deleted places go to Trash (accessible via collections panel), recoverable for 30 days
 
 ### Authentication
 - Simple password protection (single password for app access)
