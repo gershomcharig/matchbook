@@ -95,7 +95,7 @@ export default function FilterBar({
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search..."
           aria-label="Search places by name, address, notes, or tags"
-          className="w-[180px] sm:w-[160px] pl-3 pr-2 py-2 rounded-xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50"
+          className="w-[180px] sm:w-[120px] pl-3 pr-2 py-2 rounded-xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all shadow-lg shadow-zinc-900/5 dark:shadow-zinc-950/50"
         />
         {searchQuery && (
           <button

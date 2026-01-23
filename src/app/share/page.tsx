@@ -3,7 +3,8 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MapPin, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
-import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl } from '@/lib/maps';
+import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl, isShortenedMapsUrl } from '@/lib/maps';
+import { expandShortenedMapsUrl } from '@/app/actions/urls';
 import { reverseGeocode } from '@/lib/geocoding';
 
 function ShareContent() {
@@ -38,8 +39,22 @@ function ShareContent() {
         detection.url = urlDetection.url;
       }
 
-      const mapsUrl = detection.url;
+      let mapsUrl = detection.url!;
       setSharedUrl(mapsUrl);
+
+      // Expand shortened URLs
+      if (isShortenedMapsUrl(mapsUrl)) {
+        setMessage('Expanding shortened link...');
+        const expansion = await expandShortenedMapsUrl(mapsUrl);
+        if (expansion.success && expansion.expandedUrl) {
+          mapsUrl = expansion.expandedUrl;
+        } else {
+          setStatus('error');
+          setMessage('Could not expand shortened link. Try sharing the full URL from Google Maps.');
+          return;
+        }
+      }
+
       setMessage('Extracting place information...');
 
       // Extract coordinates
@@ -88,11 +103,10 @@ function ShareContent() {
         <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl shadow-amber-500/10 border border-amber-100/50 p-8">
           {/* Icon */}
           <div className="flex justify-center mb-6">
-            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center ${
-              status === 'processing' ? 'bg-amber-100' :
-              status === 'success' ? 'bg-green-100' :
-              'bg-red-100'
-            }`}>
+            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center ${status === 'processing' ? 'bg-amber-100' :
+                status === 'success' ? 'bg-green-100' :
+                  'bg-red-100'
+              }`}>
               {status === 'processing' ? (
                 <Loader2 className="w-10 h-10 text-amber-600 animate-spin" />
               ) : status === 'success' ? (
@@ -106,8 +120,8 @@ function ShareContent() {
           {/* Title */}
           <h1 className="text-2xl font-bold text-center text-zinc-900 mb-2">
             {status === 'processing' ? 'Processing...' :
-             status === 'success' ? 'Place Found!' :
-             'Oops!'}
+              status === 'success' ? 'Place Found!' :
+                'Oops!'}
           </h1>
 
           {/* Message */}
