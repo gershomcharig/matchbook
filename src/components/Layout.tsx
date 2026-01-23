@@ -665,7 +665,6 @@ export default function Layout({
             title="Collections"
           >
             <Layers className="w-4 h-4" />
-            <span className="text-sm font-medium">Collections</span>
           </button>
 
           {/* Add Place button (primary) */}
@@ -675,7 +674,6 @@ export default function Layout({
             title="Add place"
           >
             <MapPinPlus className="w-4 h-4" />
-            <span className="text-sm">Add Place</span>
           </button>
 
           {/* Logout button */}
@@ -685,7 +683,6 @@ export default function Layout({
             title="Logout"
           >
             <LogOut className="w-4 h-4" />
-            <span className="text-sm font-medium">Logout</span>
           </button>
         </div>
 
