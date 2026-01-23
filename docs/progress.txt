@@ -868,6 +868,18 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ---
 
+### 2026-01-23 (Bug Fix: Trash in Mobile Panel)
+- Modified: src/components/Layout.tsx
+  - Added import for TrashPlacesList and getDeletedPlaces
+  - Added state: showTrash (boolean), trashPlaces (PlaceWithCollection[])
+  - Added handlers: handleSelectTrash, handleTrashBack, handleTrashPlacesChanged
+  - Updated panel rendering to show TrashPlacesList when showTrash is true
+  - Added onSelectTrash prop to CollectionsList
+  - Reset trash state when closing panel via backdrop click
+- Root cause: After removing SidePanel.tsx (desktop sidebar), the mobile panel lost Trash functionality because onSelectTrash was no longer being passed to CollectionsList
+
+---
+
 ## Next Steps (from roadmap.md)
 
 1. Phase 16: Deployment

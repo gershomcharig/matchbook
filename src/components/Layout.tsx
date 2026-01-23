@@ -15,8 +15,9 @@ import DuplicateWarningModal from './DuplicateWarningModal';
 import { InstallPrompt } from './InstallPrompt';
 import CollectionsList from './CollectionsList';
 import CollectionPlacesList from './CollectionPlacesList';
+import TrashPlacesList from './TrashPlacesList';
 import { createCollection, updateCollection, deleteCollection, getCollectionPlaceCounts, type Collection } from '@/app/actions/collections';
-import { createPlace, updatePlaceTags, checkForDuplicates, type PlaceWithCollection } from '@/app/actions/places';
+import { createPlace, updatePlaceTags, checkForDuplicates, getDeletedPlaces, type PlaceWithCollection } from '@/app/actions/places';
 import { forwardGeocode } from '@/lib/geocoding';
 import { ToastContainer, generateToastId, type ToastData } from './Toast';
 
@@ -62,6 +63,10 @@ export default function Layout({
 
   // Collections panel drill-down state
   const [selectedCollectionForDrilldown, setSelectedCollectionForDrilldown] = useState<Collection | null>(null);
+
+  // Trash view state
+  const [showTrash, setShowTrash] = useState(false);
+  const [trashPlaces, setTrashPlaces] = useState<PlaceWithCollection[]>([]);
 
   // Edit Collection modal state
   const [isEditCollectionOpen, setIsEditCollectionOpen] = useState(false);
@@ -227,6 +232,30 @@ export default function Layout({
     setIsCollectionsOpen(false);
     onFocusCollection?.(collection.id);
   }, [onFocusCollection]);
+
+  // Handle selecting trash
+  const handleSelectTrash = useCallback(async () => {
+    const result = await getDeletedPlaces();
+    if (result.success && result.places) {
+      setTrashPlaces(result.places);
+    }
+    setShowTrash(true);
+  }, []);
+
+  // Handle going back from trash
+  const handleTrashBack = useCallback(() => {
+    setShowTrash(false);
+  }, []);
+
+  // Handle when trash places change (restore/delete)
+  const handleTrashPlacesChanged = useCallback(async () => {
+    const result = await getDeletedPlaces();
+    if (result.success && result.places) {
+      setTrashPlaces(result.places);
+    }
+    // Also refresh main places list
+    onPlaceAdded?.();
+  }, [onPlaceAdded]);
 
   // Handle saving a place from the Add Place modal
   const handleSavePlace = async (data: { place: ExtractedPlace; collectionId: string }) => {
@@ -754,6 +783,10 @@ export default function Layout({
                 setSelectedCollectionForDrilldown(null);
                 onCollectionFilterChange?.(null);
               }
+              // Reset trash state when closing
+              if (showTrash) {
+                setShowTrash(false);
+              }
             }}
           />
           {/* Panel */}
@@ -773,12 +806,19 @@ export default function Layout({
                   onEditCollection={handleEditCollection}
                   selectedPlaceId={selectedPlaceId}
                 />
+              ) : showTrash ? (
+                <TrashPlacesList
+                  places={trashPlaces}
+                  onBack={handleTrashBack}
+                  onPlacesChanged={handleTrashPlacesChanged}
+                />
               ) : (
                 <CollectionsList
                   onNewCollection={handleOpenNewCollection}
                   onSelectCollection={handleSelectCollection}
                   onEditCollection={handleEditCollection}
                   onFocusCollection={handleFocusCollection}
+                  onSelectTrash={handleSelectTrash}
                   selectedId={selectedCollectionId}
                   refreshTrigger={collectionsRefreshTrigger}
                 />

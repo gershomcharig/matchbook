@@ -133,3 +133,4 @@ The collections panel is the main way to explore places in list format. It opens
 10. **Pin clustering**: Group nearby pins when zoomed out (optional toggle)
 11. **Keyboard shortcuts**: V for view toggle, / for search, Escape to close, etc.
 12. **Read Later for articles**: Save article links to process later (alternative to immediate extraction)
+13. Make "Paste link" button more visible if a google maps URL (both full-size or shortened) is detected in the clipboard.
