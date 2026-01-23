@@ -317,8 +317,6 @@ function HomeContent() {
   const handleFocusCollection = useCallback((collectionId: string) => {
     setFocusCollectionId(collectionId);
     setFocusTrigger((prev) => prev + 1);
-    // Switch to map view if in list view
-    setViewMode('map');
   }, []);
 
   // Handle context menu open (right-click or long-press on marker)
