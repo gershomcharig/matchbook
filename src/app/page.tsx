@@ -8,8 +8,6 @@ import EmptyState from '@/components/EmptyState';
 import PlaceDetailsPanel from '@/components/PlaceDetailsPanel';
 import EditPlaceModal from '@/components/EditPlaceModal';
 import FilterBar from '@/components/FilterBar';
-import ViewToggle, { type ViewMode } from '@/components/ViewToggle';
-import ListView from '@/components/ListView';
 import {
   getPlacesWithCollections,
   getTagsForPlace,
@@ -47,9 +45,6 @@ function HomeContent() {
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // View state
-  const [viewMode, setViewMode] = useState<ViewMode>('map');
 
   // Focus state for map
   const [focusCollectionId, setFocusCollectionId] = useState<string | null>(null);
@@ -410,10 +405,6 @@ function HomeContent() {
   );
 
   const hasPlaces = places.length > 0;
-  const hasActiveFilters =
-    selectedCollections.length > 0 ||
-    selectedTags.length > 0 ||
-    searchQuery.trim().length > 0;
 
   return (
     <Layout
@@ -428,21 +419,13 @@ function HomeContent() {
     >
       {/* Filter bar and view toggle */}
       <FilterBar
-        collections={collections}
         tags={allTags}
-        selectedCollections={selectedCollections}
         selectedTags={selectedTags}
         searchQuery={searchQuery}
-        onCollectionChange={setSelectedCollections}
         onTagChange={setSelectedTags}
         onSearchChange={setSearchQuery}
         onClearFilters={handleClearFilters}
       />
-
-      {/* View toggle - positioned bottom-left on mobile, top-right on the filter bar area on desktop */}
-      <div className="absolute bottom-6 left-4 z-10 lg:top-4 lg:bottom-auto lg:left-auto lg:right-[340px]">
-        <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-      </div>
 
       {/* Refreshing indicator */}
       {isRefreshing && (
@@ -482,30 +465,14 @@ function HomeContent() {
       )}
 
       {/* Map View */}
-      {viewMode === 'map' && (
-        <>
-          <Map
-            places={filteredPlaces}
-            onMarkerClick={handleMarkerClick}
-            onMarkerContextMenu={handleMarkerContextMenu}
-            focusCollectionId={focusCollectionId}
-            focusTrigger={focusTrigger}
-          />
-          {!isLoading && !hasPlaces && <EmptyState />}
-        </>
-      )}
-
-      {/* List View */}
-      {viewMode === 'list' && (
-        <ListView
-          places={filteredPlaces}
-          collections={collections}
-          onPlaceClick={handlePlaceClick}
-          selectedPlaceId={selectedPlace?.id}
-          hasActiveFilters={hasActiveFilters}
-          totalPlacesCount={places.length}
-        />
-      )}
+      <Map
+        places={filteredPlaces}
+        onMarkerClick={handleMarkerClick}
+        onMarkerContextMenu={handleMarkerContextMenu}
+        focusCollectionId={focusCollectionId}
+        focusTrigger={focusTrigger}
+      />
+      {!isLoading && !hasPlaces && <EmptyState />}
 
       {/* Place Details Panel */}
       <PlaceDetailsPanel
