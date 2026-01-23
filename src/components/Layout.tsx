@@ -4,7 +4,8 @@ import { ReactNode, useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, Layers, MapPinPlus, ClipboardPaste } from 'lucide-react';
 import { clearSessionToken } from '@/lib/auth';
-import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl } from '@/lib/maps';
+import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl, isShortenedMapsUrl } from '@/lib/maps';
+import { expandShortenedMapsUrl } from '@/app/actions/urls';
 import { reverseGeocode } from '@/lib/geocoding';
 import NewCollectionModal from './NewCollectionModal';
 import EditCollectionModal from './EditCollectionModal';
@@ -454,11 +455,27 @@ export default function Layout({
         if (detection.isValid && detection.url) {
           console.log('[Google Maps URL Detected]', detection.url);
 
+          // Expand shortened URLs if needed
+          let finalUrl = detection.url;
+          if (isShortenedMapsUrl(detection.url)) {
+            console.log('[Expanding shortened URL...]');
+            showToast('success', 'Expanding link...');
+            const expansion = await expandShortenedMapsUrl(detection.url);
+            if (expansion.success && expansion.expandedUrl) {
+              finalUrl = expansion.expandedUrl;
+              console.log('[URL Expanded]', finalUrl);
+            } else {
+              console.error('[URL Expansion Failed]', expansion.error);
+              showToast('error', 'Could not expand shortened URL. Try copying the full link from Google Maps.');
+              return;
+            }
+          }
+
           // Extract place name from URL (if available)
-          const urlPlaceName = extractPlaceNameFromUrl(detection.url);
+          const urlPlaceName = extractPlaceNameFromUrl(finalUrl);
 
           // Extract coordinates from URL
-          const coordinates = extractCoordinatesFromUrl(detection.url);
+          const coordinates = extractCoordinatesFromUrl(finalUrl);
 
           if (coordinates) {
             console.log('[Coordinates Extracted]', coordinates);
@@ -474,7 +491,7 @@ export default function Layout({
                 address: placeInfo.address,
                 lat: placeInfo.lat,
                 lng: placeInfo.lng,
-                googleMapsUrl: detection.url,
+                googleMapsUrl: finalUrl,
                 urlExtractedName: urlPlaceName || null,
                 geocodedName: placeInfo.name,
                 displayName: placeInfo.displayName,
@@ -492,7 +509,7 @@ export default function Layout({
                 address: 'Address not available',
                 lat: coordinates.lat,
                 lng: coordinates.lng,
-                googleMapsUrl: detection.url,
+                googleMapsUrl: finalUrl,
                 urlExtractedName: urlPlaceName,
                 geocodedName: undefined,
                 displayName: undefined,
@@ -536,14 +553,30 @@ export default function Layout({
         if (detection.isValid && detection.url) {
           console.log('[Google Maps URL Detected]', detection.url);
 
+          // Expand shortened URLs if needed
+          let finalUrl = detection.url;
+          if (isShortenedMapsUrl(detection.url)) {
+            console.log('[Expanding shortened URL...]');
+            showToast('success', 'Expanding link...');
+            const expansion = await expandShortenedMapsUrl(detection.url);
+            if (expansion.success && expansion.expandedUrl) {
+              finalUrl = expansion.expandedUrl;
+              console.log('[URL Expanded]', finalUrl);
+            } else {
+              console.error('[URL Expansion Failed]', expansion.error);
+              showToast('error', 'Could not expand shortened URL. Try copying the full link from Google Maps.');
+              return;
+            }
+          }
+
           // Extract place name from URL (if available)
-          const urlPlaceName = extractPlaceNameFromUrl(detection.url);
+          const urlPlaceName = extractPlaceNameFromUrl(finalUrl);
           if (urlPlaceName) {
             console.log('[Place Name from URL]', urlPlaceName);
           }
 
           // Extract coordinates from URL
-          const coordinates = extractCoordinatesFromUrl(detection.url);
+          const coordinates = extractCoordinatesFromUrl(finalUrl);
 
           if (coordinates) {
             console.log('[Coordinates Extracted]', coordinates);
@@ -562,7 +595,7 @@ export default function Layout({
                 address: placeInfo.address,
                 lat: placeInfo.lat,
                 lng: placeInfo.lng,
-                googleMapsUrl: detection.url,
+                googleMapsUrl: finalUrl,
                 urlExtractedName: urlPlaceName || null,
                 geocodedName: placeInfo.name,
                 displayName: placeInfo.displayName,
@@ -573,7 +606,7 @@ export default function Layout({
 
               console.log('[All Extracted Place Data]', extractedPlaceData);
 
-              // Open the Add Place modal (Phase 4.6)
+              // Open the Add Place modal
               setExtractedPlace(extractedPlaceData);
               setIsAddPlaceOpen(true);
             } else {
@@ -585,7 +618,7 @@ export default function Layout({
                   address: 'Address not available',
                   lat: coordinates.lat,
                   lng: coordinates.lng,
-                  googleMapsUrl: detection.url,
+                  googleMapsUrl: finalUrl,
                   urlExtractedName: urlPlaceName,
                   geocodedName: undefined,
                   displayName: undefined,

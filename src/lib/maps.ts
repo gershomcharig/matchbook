@@ -218,6 +218,45 @@ function isValidCoordinate(lat: number, lng: number): boolean {
 }
 
 /**
+ * Checks if a URL is a shortened Google Maps URL that needs expansion
+ * @param url - The URL to check
+ * @returns true if URL needs expansion, false otherwise
+ */
+export function isShortenedMapsUrl(url: string): boolean {
+  if (!url) return false;
+  return /^https?:\/\/(goo\.gl\/maps\/|maps\.app\.goo\.gl\/)/i.test(url);
+}
+
+/**
+ * Expands a shortened Google Maps URL by following redirects
+ * This needs to be called from the server side due to CORS restrictions
+ * @param shortUrl - The shortened URL to expand
+ * @returns The expanded URL or null if expansion failed
+ */
+export async function expandShortenedUrl(shortUrl: string): Promise<string | null> {
+  try {
+    // Make a HEAD request to follow redirects
+    const response = await fetch(shortUrl, {
+      method: 'HEAD',
+      redirect: 'follow',
+    });
+
+    // The final URL after redirects
+    const expandedUrl = response.url;
+
+    // Verify it's a Google Maps URL
+    if (isGoogleMapsUrl(expandedUrl)) {
+      return expandedUrl;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error expanding shortened URL:', error);
+    return null;
+  }
+}
+
+/**
  * Extracts the place name from a Google Maps URL
  *
  * Google Maps URLs often contain the place name in the path:
