@@ -9,6 +9,7 @@
  */
 
 import type { Coordinates } from './maps';
+import { cleanPlaceNameForGeocoding } from './maps';
 
 /**
  * Place information returned from geocoding
@@ -271,4 +272,102 @@ export async function forwardGeocode(
  */
 export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Result from smart geocoding
+ */
+export interface SmartGeocodeResult {
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  source: 'url_coords' | 'forward_geocode' | 'reverse_geocode';
+  /** Additional place info from geocoding */
+  placeInfo?: PlaceInfo;
+}
+
+/**
+ * Options for smart geocoding
+ */
+export interface SmartGeocodeOptions {
+  /** Place name extracted from the URL (e.g., from /place/...) */
+  urlPlaceName: string | null;
+  /** Coordinates extracted from the URL */
+  extractedCoordinates: Coordinates | null;
+  /** The original Google Maps URL */
+  googleMapsUrl: string;
+}
+
+/**
+ * Smart geocoding that uses URL coordinates when available
+ *
+ * Strategy (simplified - always trust Google Maps URL coordinates):
+ * 1. If we have coordinates from URL: Use them (they're accurate from Google Maps)
+ *    - Reverse geocode to get the address
+ *    - Use URL place name if available (more accurate than geocoded name)
+ * 2. If we have ONLY place name: Forward geocode it
+ * 3. If neither: Return null
+ *
+ * Key insight: Google Maps URLs always contain accurate coordinates for the
+ * specific place. Forward geocoding a place name can find the wrong location
+ * (e.g., "Artusi" in Seattle instead of London).
+ *
+ * @param options - Geocoding options including place name and coordinates
+ * @returns Geocoding result with coordinates, or null if failed
+ */
+export async function smartGeocode(
+  options: SmartGeocodeOptions
+): Promise<SmartGeocodeResult | null> {
+  const { urlPlaceName, extractedCoordinates } = options;
+
+  // Case 1: We have coordinates - always use them (they're from Google Maps, so accurate)
+  if (extractedCoordinates) {
+    console.log('[smartGeocode] Have coords from URL, using them directly');
+
+    const reverseResult = await reverseGeocode(extractedCoordinates);
+
+    return {
+      name: urlPlaceName || reverseResult?.name || 'Unknown Place',
+      address: reverseResult?.address || 'Address not available',
+      lat: extractedCoordinates.lat,
+      lng: extractedCoordinates.lng,
+      source: 'url_coords',
+      placeInfo: reverseResult || undefined,
+    };
+  }
+
+  // Case 2: No coordinates, only place name - forward geocode
+  if (urlPlaceName) {
+    console.log('[smartGeocode] Have only name, forward geocoding...');
+
+    let forwardResult = await forwardGeocode(urlPlaceName);
+
+    // If fails, try cleaned name
+    if (!forwardResult) {
+      const cleanedName = cleanPlaceNameForGeocoding(urlPlaceName);
+      if (cleanedName && cleanedName !== urlPlaceName) {
+        console.log('[smartGeocode] Trying cleaned name:', cleanedName);
+        forwardResult = await forwardGeocode(cleanedName);
+      }
+    }
+
+    if (forwardResult) {
+      return {
+        name: urlPlaceName,
+        address: forwardResult.address,
+        lat: forwardResult.lat,
+        lng: forwardResult.lng,
+        source: 'forward_geocode',
+        placeInfo: forwardResult,
+      };
+    }
+
+    // Forward geocode failed
+    return null;
+  }
+
+  // Case 3: Neither name nor coordinates - return null
+  console.log('[smartGeocode] No name or coords available');
+  return null;
 }

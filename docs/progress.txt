@@ -892,6 +892,28 @@ Read this file at the start of each session to maintain context and avoid repeat
 
 ---
 
+### 2026-01-24 (Bug Fix: Google Maps Coordinate Extraction)
+- Problem: Wrong addresses displayed when importing Google Maps links
+  - Example: `https://maps.app.goo.gl/znBhk179A1MR4WtQA` showed "45 Danby Street" instead of "161 Bellenden Rd"
+  - Root cause: The `/@lat,lng` regex matched the VIEWPORT/camera center, not the actual PLACE coordinates
+- Solution implemented:
+  - Created: src/lib/distance.ts (Haversine formula for distance calculation)
+  - Modified: src/lib/maps.ts
+    - Reordered coordinate extraction priority: `!3d!4d` > `?q=` > `?ll=` > `/@` > `?center=`
+    - Added logic to prefer !3d!4d coords that differ from @ coords (place vs viewport)
+  - Modified: src/lib/geocoding.ts
+    - Added smartGeocode() function that validates coordinates against place name
+    - If forward-geocoded place is >500m from extracted coords, uses forward-geocoded location instead
+    - Handles all cases: both name+coords, only coords, only name, neither
+  - Modified: src/components/Layout.tsx
+    - Updated paste button handler and global paste listener to use smartGeocode()
+    - Simplified code by removing redundant fallback logic (now handled by smartGeocode)
+  - Modified: src/app/share/page.tsx
+    - Updated share target handler to use smartGeocode()
+- Verification: Build passes successfully
+
+---
+
 ## Next Steps (from roadmap.md)
 
 1. Phase 16: Deployment

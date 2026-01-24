@@ -3,9 +3,9 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MapPin, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
-import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl, isShortenedMapsUrl, cleanPlaceNameForGeocoding } from '@/lib/maps';
+import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl, isShortenedMapsUrl } from '@/lib/maps';
 import { expandShortenedMapsUrl } from '@/app/actions/urls';
-import { reverseGeocode, forwardGeocode } from '@/lib/geocoding';
+import { smartGeocode } from '@/lib/geocoding';
 
 function ShareContent() {
   const router = useRouter();
@@ -57,61 +57,34 @@ function ShareContent() {
 
       setMessage('Extracting place information...');
 
-      // Extract place name from URL
+      // Extract place name and coordinates from URL
       const urlPlaceName = extractPlaceNameFromUrl(mapsUrl);
+      const extractedCoords = extractCoordinatesFromUrl(mapsUrl);
 
-      // Extract coordinates
-      const coordinates = extractCoordinatesFromUrl(mapsUrl);
+      console.log('[Share] Extracted from URL:', { urlPlaceName, extractedCoords });
 
-      if (!coordinates) {
-        // Fallback: Try to use the place name if available (common for shared links without coordinates)
-        if (urlPlaceName) {
-          setMessage('Looking up place location...');
-          let placeInfo = await forwardGeocode(urlPlaceName);
+      // Use smart geocoding to validate coordinates against place name
+      setMessage('Getting place details...');
+      const result = await smartGeocode({
+        urlPlaceName,
+        extractedCoordinates: extractedCoords,
+        googleMapsUrl: mapsUrl,
+      });
 
-          if (!placeInfo) {
-            const cleanedName = cleanPlaceNameForGeocoding(urlPlaceName);
-            if (cleanedName && cleanedName !== urlPlaceName) {
-              console.log('[Geocoding failed, trying cleaned name]', cleanedName);
-              placeInfo = await forwardGeocode(cleanedName);
-            }
-          }
-
-          if (placeInfo) {
-            const placeData = {
-              name: placeInfo.name,
-              address: placeInfo.address,
-              lat: placeInfo.lat,
-              lng: placeInfo.lng,
-              googleMapsUrl: mapsUrl,
-            };
-
-            sessionStorage.setItem('pendingSharedPlace', JSON.stringify(placeData));
-            setStatus('success');
-            setMessage('Place found! Redirecting...');
-
-            setTimeout(() => {
-              router.push('/?fromShare=true');
-            }, 500);
-            return;
-          }
-        }
-
+      if (!result) {
         setStatus('error');
         setMessage('Could not extract location from the link.');
         return;
       }
 
-      // Get place info via geocoding
-      setMessage('Getting place details...');
-      const placeInfo = await reverseGeocode(coordinates);
+      console.log('[Share] smartGeocode result:', result);
 
       // Build the place data to pass to main app
       const placeData = {
-        name: urlPlaceName || placeInfo?.name || 'Unknown Place',
-        address: placeInfo?.address || 'Address not available',
-        lat: coordinates.lat,
-        lng: coordinates.lng,
+        name: result.name,
+        address: result.address,
+        lat: result.lat,
+        lng: result.lng,
         googleMapsUrl: mapsUrl,
       };
 

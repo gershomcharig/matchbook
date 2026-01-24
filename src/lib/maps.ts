@@ -106,12 +106,16 @@ export function detectMapsUrl(text: string): MapsUrlDetectionResult {
 /**
  * Extracts coordinates from a Google Maps URL
  *
- * Handles various coordinate formats:
- * - /@lat,lng,zoom (e.g., /@51.5007292,-0.1268141,17z)
- * - /place/Name/@lat,lng (e.g., /place/Big+Ben/@51.5007292,-0.1268141)
- * - ?q=lat,lng (e.g., ?q=51.5007,-0.1268)
- * - !3d for latitude and !4d for longitude (e.g., !3d51.5007!4d-0.1268)
- * - ?ll=lat,lng (e.g., ?ll=51.5007,-0.1268)
+ * Handles various coordinate formats in priority order:
+ * 1. !3d...!4d... (data parameter) - Most reliable for actual place location
+ * 2. ?q=lat,lng (query parameter) - Direct coordinate query
+ * 3. ?ll=lat,lng - Less common but direct
+ * 4. /@lat,lng - Often viewport/camera center, use as fallback
+ * 5. ?center= - Viewport center, lowest priority
+ *
+ * Note: The /@lat,lng format often represents the map VIEWPORT center, not the
+ * actual place location. The !3d!4d format in the data parameter is more reliable
+ * for the actual place coordinates.
  *
  * @param url - The Google Maps URL to parse
  * @returns Coordinates object with lat/lng or null if not found
@@ -122,35 +126,52 @@ export function extractCoordinatesFromUrl(url: string): Coordinates | null {
   }
 
   try {
-    // Pattern 1: /@lat,lng format (most common)
-    // Example: /@51.5007292,-0.1268141,17z
-    const atPattern = /@(-?\d+\.?\d*),(-?\d+\.?\d*)/;
-    const atMatch = url.match(atPattern);
-
-    if (atMatch) {
-      const lat = parseFloat(atMatch[1]);
-      const lng = parseFloat(atMatch[2]);
-
-      if (isValidCoordinate(lat, lng)) {
-        return { lat, lng };
-      }
-    }
-
-    // Pattern 2: !3d and !4d format
+    // Pattern 1: !3d and !4d format (HIGHEST PRIORITY - actual place location)
     // Example: !3d51.5007292!4d-0.1268141
-    const bangPattern = /!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/;
-    const bangMatch = url.match(bangPattern);
+    // Google Maps uses this format for the actual place coordinates in the data parameter
+    const bangPattern = /!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/g;
+    const bangMatches = [...url.matchAll(bangPattern)];
 
-    if (bangMatch) {
-      const lat = parseFloat(bangMatch[1]);
-      const lng = parseFloat(bangMatch[2]);
+    if (bangMatches.length > 0) {
+      // If there are multiple !3d!4d occurrences, they might represent different things
+      // (e.g., one for the place, one for the viewport). Try to find the one that
+      // differs from the @ coordinates if present.
+      const atPattern = /@(-?\d+\.?\d*),(-?\d+\.?\d*)/;
+      const atMatch = url.match(atPattern);
+      const atCoords = atMatch
+        ? { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) }
+        : null;
 
+      for (const bangMatch of bangMatches) {
+        const lat = parseFloat(bangMatch[1]);
+        const lng = parseFloat(bangMatch[2]);
+
+        if (isValidCoordinate(lat, lng)) {
+          // If we have @ coords and this !3d!4d differs significantly, prefer it
+          // (it's likely the actual place, not the viewport)
+          if (atCoords) {
+            const latDiff = Math.abs(lat - atCoords.lat);
+            const lngDiff = Math.abs(lng - atCoords.lng);
+            // If coords differ by more than 0.0001 (~11m), this is likely the place
+            if (latDiff > 0.0001 || lngDiff > 0.0001) {
+              return { lat, lng };
+            }
+          } else {
+            return { lat, lng };
+          }
+        }
+      }
+
+      // If all !3d!4d coords match @ coords, still use the first valid one
+      const firstMatch = bangMatches[0];
+      const lat = parseFloat(firstMatch[1]);
+      const lng = parseFloat(firstMatch[2]);
       if (isValidCoordinate(lat, lng)) {
         return { lat, lng };
       }
     }
 
-    // Pattern 3: ?q=lat,lng format
+    // Pattern 2: ?q=lat,lng format (direct coordinate query)
     // Example: ?q=51.5007,-0.1268
     const qPattern = /[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/;
     const qMatch = url.match(qPattern);
@@ -164,7 +185,7 @@ export function extractCoordinatesFromUrl(url: string): Coordinates | null {
       }
     }
 
-    // Pattern 4: ?ll=lat,lng format (less common)
+    // Pattern 3: ?ll=lat,lng format
     // Example: ?ll=51.5007,-0.1268
     const llPattern = /[?&]ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/;
     const llMatch = url.match(llPattern);
@@ -178,7 +199,22 @@ export function extractCoordinatesFromUrl(url: string): Coordinates | null {
       }
     }
 
-    // Pattern 5: center=lat,lng format
+    // Pattern 4: /@lat,lng format (FALLBACK - often viewport center)
+    // Example: /@51.5007292,-0.1268141,17z
+    // WARNING: This is often the camera/viewport center, not the place location
+    const atPattern = /@(-?\d+\.?\d*),(-?\d+\.?\d*)/;
+    const atMatch = url.match(atPattern);
+
+    if (atMatch) {
+      const lat = parseFloat(atMatch[1]);
+      const lng = parseFloat(atMatch[2]);
+
+      if (isValidCoordinate(lat, lng)) {
+        return { lat, lng };
+      }
+    }
+
+    // Pattern 5: center=lat,lng format (lowest priority - viewport center)
     // Example: ?center=51.5007,-0.1268
     const centerPattern = /[?&]center=(-?\d+\.?\d*),(-?\d+\.?\d*)/;
     const centerMatch = url.match(centerPattern);

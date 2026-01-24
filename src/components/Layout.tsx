@@ -4,9 +4,9 @@ import { ReactNode, useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, Layers, MapPinPlus, ClipboardPaste } from 'lucide-react';
 import { clearSessionToken } from '@/lib/auth';
-import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl, isShortenedMapsUrl, cleanPlaceNameForGeocoding } from '@/lib/maps';
+import { detectMapsUrl, extractCoordinatesFromUrl, extractPlaceNameFromUrl, isShortenedMapsUrl } from '@/lib/maps';
 import { expandShortenedMapsUrl } from '@/app/actions/urls';
-import { reverseGeocode } from '@/lib/geocoding';
+import { smartGeocode } from '@/lib/geocoding';
 import NewCollectionModal from './NewCollectionModal';
 import EditCollectionModal from './EditCollectionModal';
 import AddPlaceModal, { type ExtractedPlace } from './AddPlaceModal';
@@ -18,7 +18,7 @@ import CollectionPlacesList from './CollectionPlacesList';
 import TrashPlacesList from './TrashPlacesList';
 import { createCollection, updateCollection, deleteCollection, getCollectionPlaceCounts, type Collection } from '@/app/actions/collections';
 import { createPlace, updatePlaceTags, checkForDuplicates, getDeletedPlaces, type PlaceWithCollection } from '@/app/actions/places';
-import { forwardGeocode } from '@/lib/geocoding';
+import { forwardGeocode } from '@/lib/geocoding'; // Used by ManualPlaceModal handler
 import { ToastContainer, generateToastId, type ToastData } from './Toast';
 
 interface LayoutProps {
@@ -491,96 +491,39 @@ export default function Layout({
             }
           }
 
-          // Extract place name from URL (if available)
+          // Extract place name and coordinates from URL
           const urlPlaceName = extractPlaceNameFromUrl(finalUrl);
+          const extractedCoords = extractCoordinatesFromUrl(finalUrl);
 
-          // Extract coordinates from URL
-          const coordinates = extractCoordinatesFromUrl(finalUrl);
+          console.log('[Extracted from URL]', { urlPlaceName, extractedCoords });
 
-          if (coordinates) {
-            console.log('[Coordinates Extracted]', coordinates);
+          // Use smart geocoding to validate coordinates against place name
+          const result = await smartGeocode({
+            urlPlaceName,
+            extractedCoordinates: extractedCoords,
+            googleMapsUrl: finalUrl,
+          });
 
-            // Reverse geocode to get place information
-            const placeInfo = await reverseGeocode(coordinates);
+          if (result) {
+            console.log('[smartGeocode result]', result);
 
-            if (placeInfo) {
-              const finalName = urlPlaceName || placeInfo.name;
+            const extractedPlaceData: ExtractedPlace = {
+              name: result.name,
+              address: result.address,
+              lat: result.lat,
+              lng: result.lng,
+              googleMapsUrl: finalUrl,
+              urlExtractedName: urlPlaceName || null,
+              geocodedName: result.placeInfo?.name,
+              displayName: result.placeInfo?.displayName,
+              placeType: result.placeInfo?.placeType || null,
+              city: result.placeInfo?.city || null,
+              country: result.placeInfo?.country || null,
+            };
 
-              const extractedPlaceData: ExtractedPlace = {
-                name: finalName,
-                address: placeInfo.address,
-                lat: placeInfo.lat,
-                lng: placeInfo.lng,
-                googleMapsUrl: finalUrl,
-                urlExtractedName: urlPlaceName || null,
-                geocodedName: placeInfo.name,
-                displayName: placeInfo.displayName,
-                placeType: placeInfo.placeType || null,
-                city: placeInfo.city || null,
-                country: placeInfo.country || null,
-              };
-
-              setExtractedPlace(extractedPlaceData);
-              setIsAddPlaceOpen(true);
-            } else if (urlPlaceName) {
-              // Partial data fallback
-              const partialPlaceData: ExtractedPlace = {
-                name: urlPlaceName,
-                address: 'Address not available',
-                lat: coordinates.lat,
-                lng: coordinates.lng,
-                googleMapsUrl: finalUrl,
-                urlExtractedName: urlPlaceName,
-                geocodedName: undefined,
-                displayName: undefined,
-                placeType: null,
-                city: null,
-                country: null,
-              };
-              setExtractedPlace(partialPlaceData);
-              setIsAddPlaceOpen(true);
-              showToast('error', 'Could not get full address info. You can still save the place.');
-            } else {
-              showToast('error', 'Could not get place information. Please try again or add manually.');
-            }
+            setExtractedPlace(extractedPlaceData);
+            setIsAddPlaceOpen(true);
           } else {
-            // Fallback: Try to use the place name if available
-            if (urlPlaceName) {
-              console.log('[No coordinates, trying geocoding with name]', urlPlaceName);
-              showToast('info', `Found "${urlPlaceName}", looking up location...`);
-
-              // Try full name first
-              let placeInfo = await forwardGeocode(urlPlaceName);
-
-              // If fails, try cleaned name
-              if (!placeInfo) {
-                const cleanedName = cleanPlaceNameForGeocoding(urlPlaceName);
-                if (cleanedName && cleanedName !== urlPlaceName) {
-                  console.log('[Geocoding failed, trying cleaned name]', cleanedName);
-                  placeInfo = await forwardGeocode(cleanedName);
-                }
-              }
-
-              if (placeInfo) {
-                const extractedPlaceData: ExtractedPlace = {
-                  name: placeInfo.name,
-                  address: placeInfo.address,
-                  lat: placeInfo.lat,
-                  lng: placeInfo.lng,
-                  googleMapsUrl: finalUrl,
-                  urlExtractedName: urlPlaceName,
-                  geocodedName: placeInfo.name,
-                  displayName: placeInfo.displayName,
-                  placeType: placeInfo.placeType || null,
-                  city: placeInfo.city || null,
-                  country: placeInfo.country || null,
-                };
-                setExtractedPlace(extractedPlaceData);
-                setIsAddPlaceOpen(true);
-                return;
-              }
-            }
-
             showToast('error', 'Could not find location in URL. Try a different Google Maps link.');
           }
         } else {
@@ -626,110 +569,43 @@ export default function Layout({
             }
           }
 
-          // Extract place name from URL (if available)
+          // Extract place name and coordinates from URL
           const urlPlaceName = extractPlaceNameFromUrl(finalUrl);
-          if (urlPlaceName) {
-            console.log('[Place Name from URL]', urlPlaceName);
-          }
+          const extractedCoords = extractCoordinatesFromUrl(finalUrl);
 
-          // Extract coordinates from URL
-          const coordinates = extractCoordinatesFromUrl(finalUrl);
+          console.log('[Extracted from URL]', { urlPlaceName, extractedCoords });
 
-          if (coordinates) {
-            console.log('[Coordinates Extracted]', coordinates);
+          // Use smart geocoding to validate coordinates against place name
+          const result = await smartGeocode({
+            urlPlaceName,
+            extractedCoordinates: extractedCoords,
+            googleMapsUrl: finalUrl,
+          });
 
-            // Reverse geocode to get place information
-            console.log('[Fetching place info from geocoding...]');
-            const placeInfo = await reverseGeocode(coordinates);
+          if (result) {
+            console.log('[smartGeocode result]', result);
 
-            if (placeInfo) {
-              // Prefer URL-extracted name if available (more accurate for named places)
-              const finalName = urlPlaceName || placeInfo.name;
+            const extractedPlaceData: ExtractedPlace = {
+              name: result.name,
+              address: result.address,
+              lat: result.lat,
+              lng: result.lng,
+              googleMapsUrl: finalUrl,
+              urlExtractedName: urlPlaceName || null,
+              geocodedName: result.placeInfo?.name,
+              displayName: result.placeInfo?.displayName,
+              placeType: result.placeInfo?.placeType || null,
+              city: result.placeInfo?.city || null,
+              country: result.placeInfo?.country || null,
+            };
 
-              // Build extracted place data
-              const extractedPlaceData: ExtractedPlace = {
-                name: finalName,
-                address: placeInfo.address,
-                lat: placeInfo.lat,
-                lng: placeInfo.lng,
-                googleMapsUrl: finalUrl,
-                urlExtractedName: urlPlaceName || null,
-                geocodedName: placeInfo.name,
-                displayName: placeInfo.displayName,
-                placeType: placeInfo.placeType || null,
-                city: placeInfo.city || null,
-                country: placeInfo.country || null,
-              };
+            console.log('[All Extracted Place Data]', extractedPlaceData);
 
-              console.log('[All Extracted Place Data]', extractedPlaceData);
-
-              // Open the Add Place modal
-              setExtractedPlace(extractedPlaceData);
-              setIsAddPlaceOpen(true);
-            } else {
-              console.error('[Failed to get place info] Geocoding failed');
-              // If we have URL name and coordinates, still allow adding with partial data
-              if (urlPlaceName && coordinates) {
-                const partialPlaceData: ExtractedPlace = {
-                  name: urlPlaceName,
-                  address: 'Address not available',
-                  lat: coordinates.lat,
-                  lng: coordinates.lng,
-                  googleMapsUrl: finalUrl,
-                  urlExtractedName: urlPlaceName,
-                  geocodedName: undefined,
-                  displayName: undefined,
-                  placeType: null,
-                  city: null,
-                  country: null,
-                };
-                setExtractedPlace(partialPlaceData);
-                setIsAddPlaceOpen(true);
-                showToast('error', 'Could not get full address info. You can still save the place.');
-              } else {
-                showToast('error', 'Could not get place information. Please try again or add manually.');
-              }
-            }
+            // Open the Add Place modal
+            setExtractedPlace(extractedPlaceData);
+            setIsAddPlaceOpen(true);
           } else {
-            // Fallback: Try to use the place name if available
-            if (urlPlaceName) {
-              console.log('[No coordinates, trying geocoding with name]', urlPlaceName);
-              showToast('info', `Found "${urlPlaceName}", looking up location...`);
-
-              // Try full name first
-              let placeInfo = await forwardGeocode(urlPlaceName);
-
-              // If fails, try cleaned name
-              if (!placeInfo) {
-                const cleanedName = cleanPlaceNameForGeocoding(urlPlaceName);
-                if (cleanedName && cleanedName !== urlPlaceName) {
-                  console.log('[Geocoding failed, trying cleaned name]', cleanedName);
-                  placeInfo = await forwardGeocode(cleanedName);
-                }
-              }
-
-              if (placeInfo) {
-                const extractedPlaceData: ExtractedPlace = {
-                  name: placeInfo.name,
-                  address: placeInfo.address,
-                  lat: placeInfo.lat,
-                  lng: placeInfo.lng,
-                  googleMapsUrl: finalUrl,
-                  urlExtractedName: urlPlaceName,
-                  geocodedName: placeInfo.name,
-                  displayName: placeInfo.displayName,
-                  placeType: placeInfo.placeType || null,
-                  city: placeInfo.city || null,
-                  country: placeInfo.country || null,
-                };
-                console.log('[All Extracted Place Data (via fallback)]', extractedPlaceData);
-                setExtractedPlace(extractedPlaceData);
-                setIsAddPlaceOpen(true);
-                return;
-              }
-            }
-
-            console.log('[No coordinates found in URL] Cannot extract place info');
+            console.log('[smartGeocode failed] Could not extract place info');
             showToast('error', 'Could not find location in URL. Try a different Google Maps link.');
           }
         }
