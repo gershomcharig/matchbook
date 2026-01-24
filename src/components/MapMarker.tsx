@@ -2,7 +2,6 @@
 
 import { useRef, useCallback } from 'react';
 import { Marker, MarkerEvent } from 'react-map-gl/mapbox';
-import { getContrastColor } from '@/lib/colors';
 import { findIconByName } from '@/lib/icons';
 
 interface MapMarkerProps {
@@ -39,7 +38,6 @@ export default function MapMarker({
 }: MapMarkerProps) {
   const iconData = findIconByName(iconName);
   const IconComponent = iconData?.icon;
-  const contrastColor = getContrastColor(color);
 
   // Long press timer ref
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -108,7 +106,7 @@ export default function MapMarker({
     <Marker
       longitude={lng}
       latitude={lat}
-      anchor="bottom"
+      anchor="center"
       onClick={handleClick}
     >
       {/* Custom pin shape with drop shadow */}
@@ -130,40 +128,26 @@ export default function MapMarker({
           }
         }}
       >
-        {/* Pin body - teardrop shape using SVG */}
+        {/* Pin body - simple circle */}
         <svg
           width="32"
-          height="42"
-          viewBox="0 0 32 42"
+          height="32"
+          viewBox="0 0 32 32"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Pin shape path - teardrop */}
-          <path
-            d="M16 0C7.163 0 0 7.163 0 16c0 8.837 16 26 16 26s16-17.163 16-26C32 7.163 24.837 0 16 0z"
-            fill={color}
-          />
-          {/* Inner circle for icon background */}
-          <circle
-            cx="16"
-            cy="14"
-            r="10"
-            fill={color}
-            stroke={contrastColor}
-            strokeWidth="1.5"
-            strokeOpacity="0.2"
-          />
+          <circle cx="16" cy="16" r="16" fill={color} />
         </svg>
 
-        {/* Icon positioned in the center of the pin */}
+        {/* Icon centered in the circle */}
         <div
-          className="absolute top-[4px] left-1/2 -translate-x-1/2 flex items-center justify-center"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
           style={{ width: '20px', height: '20px' }}
         >
           {IconComponent && (
             <IconComponent
               size={14}
-              color={contrastColor}
+              color="#FFFFFF"
               strokeWidth={2.5}
             />
           )}
