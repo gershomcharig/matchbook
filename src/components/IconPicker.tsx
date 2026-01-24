@@ -110,7 +110,7 @@ export default function IconPicker({
       </div>
 
       {/* Scrollable icon grid */}
-      <div className="max-h-64 overflow-y-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30">
+      <div className="max-h-32 overflow-y-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30">
         {Object.entries(groupedIcons).map(([category, icons]) => (
           <div key={category} className="p-3">
             {/* Category header (only show when viewing all) */}

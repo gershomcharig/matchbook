@@ -46,10 +46,6 @@ function HomeContent() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Focus state for map
-  const [focusCollectionId, setFocusCollectionId] = useState<string | null>(null);
-  const [focusTrigger, setFocusTrigger] = useState(0);
-
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
     isVisible: boolean;
@@ -313,12 +309,6 @@ function HomeContent() {
     setIsRefreshing(false);
   }, [fetchData, handleClosePanel]);
 
-  // Handle focus on collection (zoom map to its places)
-  const handleFocusCollection = useCallback((collectionId: string) => {
-    setFocusCollectionId(collectionId);
-    setFocusTrigger((prev) => prev + 1);
-  }, []);
-
   // Handle context menu open (right-click or long-press on marker)
   const handleMarkerContextMenu = useCallback(
     (placeId: string, x: number, y: number) => {
@@ -407,7 +397,6 @@ function HomeContent() {
   return (
     <Layout
       onPlaceAdded={fetchData}
-      onFocusCollection={handleFocusCollection}
       sharedPlace={sharedPlace}
       onSharedPlaceHandled={handleSharedPlaceHandled}
       places={places}
@@ -467,8 +456,6 @@ function HomeContent() {
         places={filteredPlaces}
         onMarkerClick={handleMarkerClick}
         onMarkerContextMenu={handleMarkerContextMenu}
-        focusCollectionId={focusCollectionId}
-        focusTrigger={focusTrigger}
       />
       {!isLoading && !hasPlaces && <EmptyState />}
 

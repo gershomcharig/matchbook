@@ -146,9 +146,9 @@ export default function EditCollectionModal({
         </div>
       ) : (
         // Edit form view
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Preview */}
-          <div className="flex items-center justify-center py-4">
+          <div className="flex items-center justify-center py-2">
             <div className="flex items-center gap-4">
               {/* Pin preview */}
               <div
@@ -173,7 +173,7 @@ export default function EditCollectionModal({
           <div className="h-px bg-zinc-200 dark:bg-zinc-800" />
 
           {/* Name input */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <label
               htmlFor="edit-collection-name"
               className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
@@ -215,7 +215,7 @@ export default function EditCollectionModal({
           )}
 
           {/* Delete link */}
-          <div className="pt-2">
+          <div>
             <button
               type="button"
               onClick={handleDeleteClick}
@@ -227,7 +227,7 @@ export default function EditCollectionModal({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-1">
             <button
               type="button"
               onClick={handleClose}

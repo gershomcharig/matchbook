@@ -26,8 +26,6 @@ interface LayoutProps {
   onCollectionSelected?: (collection: Collection) => void;
   /** Callback when a place is added */
   onPlaceAdded?: () => void;
-  /** Callback when focus on collection is requested */
-  onFocusCollection?: (collectionId: string) => void;
   /** Shared place data from PWA share target */
   sharedPlace?: ExtractedPlace | null;
   /** Callback to clear shared place after handling */
@@ -46,7 +44,6 @@ export default function Layout({
   children,
   onCollectionSelected,
   onPlaceAdded,
-  onFocusCollection,
   sharedPlace,
   onSharedPlaceHandled,
   places = [],
@@ -226,12 +223,6 @@ export default function Layout({
       showToast('error', result.error || 'Failed to delete collection');
     }
   };
-
-  // Handle focus on collection (zoom map to its places)
-  const handleFocusCollection = useCallback((collection: Collection) => {
-    setIsCollectionsOpen(false);
-    onFocusCollection?.(collection.id);
-  }, [onFocusCollection]);
 
   // Handle selecting trash
   const handleSelectTrash = useCallback(async () => {
@@ -892,7 +883,6 @@ export default function Layout({
                   onNewCollection={handleOpenNewCollection}
                   onSelectCollection={handleSelectCollection}
                   onEditCollection={handleEditCollection}
-                  onFocusCollection={handleFocusCollection}
                   onSelectTrash={handleSelectTrash}
                   selectedId={selectedCollectionId}
                   refreshTrigger={collectionsRefreshTrigger}

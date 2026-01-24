@@ -60,7 +60,7 @@ export default function Modal({
       {/* Modal panel */}
       <div
         className={`
-          relative w-full ${maxWidth}
+          relative w-full ${maxWidth} max-h-[90vh] flex flex-col
           bg-white dark:bg-zinc-900
           rounded-2xl shadow-2xl shadow-zinc-900/20 dark:shadow-zinc-950/50
           border border-zinc-200 dark:border-zinc-800
@@ -71,7 +71,7 @@ export default function Modal({
         aria-labelledby="modal-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-200 dark:border-zinc-800 flex-shrink-0">
           <h2
             id="modal-title"
             className="text-lg font-semibold text-zinc-900 dark:text-zinc-100"
@@ -88,7 +88,7 @@ export default function Modal({
         </div>
 
         {/* Content */}
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-5 py-4 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

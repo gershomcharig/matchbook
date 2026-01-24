@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Folder, Plus, Pencil, Focus, Trash2 } from 'lucide-react';
+import { Folder, Plus, Pencil, Trash2 } from 'lucide-react';
 import { getCollections, getCollectionPlaceCounts, type Collection } from '@/app/actions/collections';
 import { getDeletedPlaces } from '@/app/actions/places';
 import { findIconByName } from '@/lib/icons';
@@ -13,8 +13,6 @@ interface CollectionsListProps {
   onSelectCollection?: (collection: Collection) => void;
   /** Callback when edit button is clicked */
   onEditCollection?: (collection: Collection) => void;
-  /** Callback when focus button is clicked */
-  onFocusCollection?: (collection: Collection) => void;
   /** Callback when Trash is clicked */
   onSelectTrash?: () => void;
   /** Currently selected collection ID */
@@ -27,7 +25,6 @@ export default function CollectionsList({
   onNewCollection,
   onSelectCollection,
   onEditCollection,
-  onFocusCollection,
   onSelectTrash,
   selectedId,
   refreshTrigger,
@@ -184,20 +181,6 @@ export default function CollectionsList({
 
                 {/* Action buttons (visible on hover) */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {/* Focus on map button */}
-                  {count > 0 && onFocusCollection && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onFocusCollection(collection);
-                      }}
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                      title="Show on map"
-                    >
-                      <Focus className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-
                   {/* Edit button */}
                   {onEditCollection && (
                     <button

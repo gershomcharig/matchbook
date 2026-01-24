@@ -24,13 +24,9 @@ interface MapProps {
   onMarkerClick?: (placeId: string) => void;
   /** Callback when a marker context menu is requested (right-click/long-press) */
   onMarkerContextMenu?: (placeId: string, x: number, y: number) => void;
-  /** Collection ID to focus/zoom on */
-  focusCollectionId?: string | null;
-  /** Trigger counter to force re-focus on same collection */
-  focusTrigger?: number;
 }
 
-export default function Map({ places = [], onMarkerClick, onMarkerContextMenu, focusCollectionId, focusTrigger }: MapProps) {
+export default function Map({ places = [], onMarkerClick, onMarkerContextMenu }: MapProps) {
   const mapRef = useRef<MapRef>(null);
 
   // Handle marker click
@@ -91,19 +87,6 @@ export default function Map({ places = [], onMarkerClick, onMarkerContextMenu, f
   useEffect(() => {
     fitBoundsToPlaces(places);
   }, [places, fitBoundsToPlaces]);
-
-  // Focus on a specific collection when focusCollectionId or focusTrigger changes
-  useEffect(() => {
-    if (!focusCollectionId || !mapRef.current) return;
-
-    const collectionPlaces = places.filter(
-      (p) => p.collection_id === focusCollectionId
-    );
-
-    if (collectionPlaces.length > 0) {
-      fitBoundsToPlaces(collectionPlaces);
-    }
-  }, [focusCollectionId, focusTrigger, places, fitBoundsToPlaces]);
 
   return (
     <MapGL
