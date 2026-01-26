@@ -86,11 +86,25 @@ export async function expandShortenedMapsUrl(
     try {
       const result = await expandAndScrapeGoogleMapsUrl(shortUrl);
 
+      console.log('[URL Expansion] Puppeteer result:', {
+        success: result.success,
+        expandedUrl: result.expandedUrl?.substring(0, 100) + (result.expandedUrl && result.expandedUrl.length > 100 ? '...' : ''),
+        error: result.error,
+      });
+
       if (result.success && result.expandedUrl) {
-        console.log('[URL Expansion] Puppeteer success:', {
+        console.log('[URL Expansion] Scraped data:', {
           name: result.data?.name,
-          address: result.data?.address
+          address: result.data?.address,
+          phone: result.data?.phone,
+          website: result.data?.website,
+          hours: result.data?.openingHours,
         });
+
+        // Warn if address is missing
+        if (!result.data?.address) {
+          console.warn('[URL Expansion] WARNING: Address not scraped from page');
+        }
 
         return {
           success: true,
@@ -101,6 +115,8 @@ export async function expandShortenedMapsUrl(
           scrapedWebsite: result.data?.website,
           scrapedHours: result.data?.openingHours,
         };
+      } else {
+        console.warn('[URL Expansion] Puppeteer returned unsuccessful result:', result.error);
       }
     } catch (puppeteerError) {
       console.warn('[URL Expansion] Puppeteer failed, falling back to fetch:', puppeteerError);

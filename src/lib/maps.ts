@@ -117,6 +117,16 @@ export function detectMapsUrl(text: string): MapsUrlDetectionResult {
  * actual place location. The !3d!4d format in the data parameter is more reliable
  * for the actual place coordinates.
  *
+ * For Android-shared URLs, the URL may contain multiple !3d!4d pairs:
+ * - Device/user location (where user shared from)
+ * - Actual place location
+ * - Viewport center
+ *
+ * We use heuristics to identify the place location:
+ * 1. Look for place ID marker (!1s0x...) - coords following this are the place
+ * 2. Prefer coords that differ from the viewport (@ coords)
+ * 3. Use the LAST !3d!4d pair as fallback (typically the focused place)
+ *
  * @param url - The Google Maps URL to parse
  * @returns Coordinates object with lat/lng or null if not found
  */
@@ -126,48 +136,88 @@ export function extractCoordinatesFromUrl(url: string): Coordinates | null {
   }
 
   try {
+    console.log('[Coords] Extracting from URL:', url.substring(0, 200) + (url.length > 200 ? '...' : ''));
+
     // Pattern 1: !3d and !4d format (HIGHEST PRIORITY - actual place location)
     // Example: !3d51.5007292!4d-0.1268141
     // Google Maps uses this format for the actual place coordinates in the data parameter
     const bangPattern = /!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/g;
     const bangMatches = [...url.matchAll(bangPattern)];
 
+    console.log('[Coords] Found', bangMatches.length, '!3d!4d pairs');
+
     if (bangMatches.length > 0) {
-      // If there are multiple !3d!4d occurrences, they might represent different things
-      // (e.g., one for the place, one for the viewport). Try to find the one that
-      // differs from the @ coordinates if present.
+      // Log all found coordinate pairs for debugging
+      bangMatches.forEach((match, i) => {
+        console.log(`[Coords]   Pair ${i}: lat=${match[1]}, lng=${match[2]}`);
+      });
+
+      // Get @ coordinates (viewport center) for comparison
       const atPattern = /@(-?\d+\.?\d*),(-?\d+\.?\d*)/;
       const atMatch = url.match(atPattern);
       const atCoords = atMatch
         ? { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) }
         : null;
 
-      for (const bangMatch of bangMatches) {
-        const lat = parseFloat(bangMatch[1]);
-        const lng = parseFloat(bangMatch[2]);
+      if (atCoords) {
+        console.log('[Coords] Viewport @ coords:', atCoords);
+      }
 
+      // Strategy 1: Look for place ID marker (!1s0x...:0x...)
+      // Coordinates immediately after a place ID are definitively the place location
+      const placeIdPattern = /!1s0x[0-9a-f]+:0x[0-9a-f]+!.*?!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/i;
+      const placeIdMatch = url.match(placeIdPattern);
+      if (placeIdMatch) {
+        const lat = parseFloat(placeIdMatch[1]);
+        const lng = parseFloat(placeIdMatch[2]);
         if (isValidCoordinate(lat, lng)) {
-          // If we have @ coords and this !3d!4d differs significantly, prefer it
-          // (it's likely the actual place, not the viewport)
-          if (atCoords) {
-            const latDiff = Math.abs(lat - atCoords.lat);
-            const lngDiff = Math.abs(lng - atCoords.lng);
-            // If coords differ by more than 0.0001 (~11m), this is likely the place
-            if (latDiff > 0.0001 || lngDiff > 0.0001) {
-              return { lat, lng };
-            }
-          } else {
+          console.log('[Coords] Found coords after place ID:', { lat, lng });
+          return { lat, lng };
+        }
+      }
+
+      // Strategy 2: For URLs with /place/ path, look for coords in data= section
+      // Pattern: /place/NAME/data=...!3d!4d
+      if (url.includes('/place/')) {
+        const dataMatch = url.match(/\/place\/[^/]+\/data=.*?!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
+        if (dataMatch) {
+          const lat = parseFloat(dataMatch[1]);
+          const lng = parseFloat(dataMatch[2]);
+          if (isValidCoordinate(lat, lng)) {
+            console.log('[Coords] Found coords in /place/ data section:', { lat, lng });
             return { lat, lng };
           }
         }
       }
 
-      // If all !3d!4d coords match @ coords, still use the first valid one
-      const firstMatch = bangMatches[0];
-      const lat = parseFloat(firstMatch[1]);
-      const lng = parseFloat(firstMatch[2]);
-      if (isValidCoordinate(lat, lng)) {
-        return { lat, lng };
+      // Strategy 3: Find coords that differ significantly from viewport
+      // (these are likely the place, not the camera position)
+      if (atCoords) {
+        for (const bangMatch of bangMatches) {
+          const lat = parseFloat(bangMatch[1]);
+          const lng = parseFloat(bangMatch[2]);
+
+          if (isValidCoordinate(lat, lng)) {
+            const latDiff = Math.abs(lat - atCoords.lat);
+            const lngDiff = Math.abs(lng - atCoords.lng);
+            // If coords differ by more than 0.0001 (~11m), this is likely the place
+            if (latDiff > 0.0001 || lngDiff > 0.0001) {
+              console.log('[Coords] Using coords that differ from viewport:', { lat, lng });
+              return { lat, lng };
+            }
+          }
+        }
+      }
+
+      // Strategy 4: Use the LAST valid !3d!4d pair
+      // In Android URLs, the last pair is typically the focused place
+      for (let i = bangMatches.length - 1; i >= 0; i--) {
+        const lat = parseFloat(bangMatches[i][1]);
+        const lng = parseFloat(bangMatches[i][2]);
+        if (isValidCoordinate(lat, lng)) {
+          console.log('[Coords] Using last !3d!4d pair:', { lat, lng });
+          return { lat, lng };
+        }
       }
     }
 

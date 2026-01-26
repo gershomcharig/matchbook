@@ -70,37 +70,86 @@ async function getBrowser(): Promise<Browser> {
 
 /**
  * Handle Google consent page if we land on it
+ * Improved to detect consent forms in page content, not just URL
  */
 async function handleConsentPage(page: Page): Promise<void> {
-  if (!page.url().includes('consent.google.com')) {
+  const url = page.url();
+
+  // Check URL for consent page
+  const isConsentUrl = url.includes('consent.google.com');
+
+  // Also check page content for consent forms (some regions show inline consent)
+  const hasConsentForm = await page.evaluate(() => {
+    // Check for common consent form indicators
+    const consentIndicators = [
+      'form[action*="consent"]',
+      '#L2AGLb', // Google's "Accept all" button ID
+      'button[aria-label*="Accept"]',
+      'button[aria-label*="Agree"]',
+      '[data-ved] button', // Google's consent buttons often have data-ved
+    ];
+
+    for (const selector of consentIndicators) {
+      if (document.querySelector(selector)) {
+        return true;
+      }
+    }
+
+    // Check for consent-related text
+    const bodyText = document.body?.innerText?.toLowerCase() || '';
+    return bodyText.includes('before you continue') ||
+           bodyText.includes('accept all') ||
+           bodyText.includes('consent');
+  }).catch(() => false);
+
+  if (!isConsentUrl && !hasConsentForm) {
     return;
   }
 
   console.log('[Scraper] Handling consent page...');
 
   try {
-    // Find and click the accept button
-    await page.evaluate(() => {
+    // Try multiple consent button selectors
+    const consentClicked = await page.evaluate(() => {
+      // Priority-ordered list of consent button selectors
+      const buttonSelectors = [
+        '#L2AGLb', // Google's "Accept all" button ID (most reliable)
+        'button[aria-label*="Accept all"]',
+        'button[aria-label*="Accept"]',
+        'button[aria-label*="Agree"]',
+        'form[action*="consent"] button[type="submit"]',
+        'form[action*="consent"] button',
+      ];
+
+      for (const selector of buttonSelectors) {
+        const btn = document.querySelector(selector);
+        if (btn instanceof HTMLElement) {
+          console.log('[Scraper] Clicking consent button:', selector);
+          btn.click();
+          return true;
+        }
+      }
+
+      // Fallback: find any button with accept/agree text
       const buttons = Array.from(document.querySelectorAll('button'));
       for (const btn of buttons) {
         const text = btn.textContent?.toLowerCase() || '';
-        if (text.includes('accept') || text.includes('agree') || text.includes('i agree')) {
+        const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
+        if (text.includes('accept') || text.includes('agree') ||
+            ariaLabel.includes('accept') || ariaLabel.includes('agree')) {
           btn.click();
-          return;
+          return true;
         }
       }
-      // Try form submit
-      const forms = Array.from(document.querySelectorAll('form'));
-      for (const form of forms) {
-        const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
-        if (submitBtn instanceof HTMLElement) {
-          submitBtn.click();
-          return;
-        }
-      }
+
+      return false;
     });
 
-    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 });
+    if (consentClicked) {
+      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {
+        console.log('[Scraper] Navigation after consent timed out, continuing...');
+      });
+    }
   } catch (error) {
     console.log('[Scraper] Consent handling error:', error);
   }
@@ -142,9 +191,22 @@ export async function scrapeGoogleMapsPlace(mapsUrl: string): Promise<ScrapedPla
 
     // Wait for content to load
     await page.waitForSelector('h1', { timeout: 10000 }).catch(() => {});
-    await new Promise(r => setTimeout(r, 1500)); // Extra time for dynamic content
 
-    // Extract place data
+    // Increased wait time from 1.5s to 2.5s for more dynamic content to load
+    await new Promise(r => setTimeout(r, 2500));
+
+    // Try to wait specifically for address element (with timeout)
+    await page.waitForSelector('button[data-item-id="address"], [data-item-id="address"], div[data-section-id="ad"] button', {
+      timeout: 3000
+    }).catch(() => {
+      console.log('[Scraper] Address selector not found within timeout, continuing...');
+    });
+
+    // Log the final URL for debugging
+    const finalUrl = page.url();
+    console.log('[Scraper] Final URL after load:', finalUrl);
+
+    // Extract place data with fallback selectors
     const data = await page.evaluate((): ScrapedPlaceData => {
       const result: ScrapedPlaceData = {
         name: null,
@@ -157,10 +219,52 @@ export async function scrapeGoogleMapsPlace(mapsUrl: string): Promise<ScrapedPla
         result.name = h1.textContent?.trim() || null;
       }
 
-      // Get address from the address button
-      const addressBtn = document.querySelector('button[data-item-id="address"]');
-      if (addressBtn) {
-        result.address = addressBtn.textContent?.trim() || null;
+      // Get address using multiple fallback selectors
+      const addressSelectors = [
+        'button[data-item-id="address"]',         // Primary selector
+        '[data-item-id="address"]',               // Any element with this data attribute
+        'div[data-section-id="ad"] button',       // Address section button
+        'button[aria-label*="Address"]',          // Button with Address in aria-label
+        'button[aria-label*="address"]',          // Lowercase variant
+        '[data-tooltip*="address" i]',            // Element with address tooltip
+      ];
+
+      for (const selector of addressSelectors) {
+        try {
+          const addressEl = document.querySelector(selector);
+          if (addressEl) {
+            const text = addressEl.textContent?.trim();
+            // Validate it looks like an address (has numbers or common address words)
+            if (text && (
+              /\d/.test(text) ||                    // Contains numbers
+              /street|road|lane|ave|blvd/i.test(text) ||  // Common road words
+              /,/.test(text)                        // Contains comma (city, state)
+            )) {
+              result.address = text;
+              console.log('[Scraper] Address found via:', selector);
+              break;
+            }
+          }
+        } catch {
+          // Selector syntax error, skip
+        }
+      }
+
+      // Fallback: Extract address from aria-label on the address section
+      if (!result.address) {
+        const allButtons = document.querySelectorAll('button[aria-label]');
+        for (const btn of allButtons) {
+          const label = btn.getAttribute('aria-label') || '';
+          // Look for labels that contain "Address:" prefix
+          if (label.toLowerCase().includes('address:')) {
+            const addressPart = label.replace(/^address:\s*/i, '').trim();
+            if (addressPart) {
+              result.address = addressPart;
+              console.log('[Scraper] Address found via aria-label');
+              break;
+            }
+          }
+        }
       }
 
       // Get rating
@@ -192,6 +296,23 @@ export async function scrapeGoogleMapsPlace(mapsUrl: string): Promise<ScrapedPla
 
       return result;
     });
+
+    // If address is still null, try to extract from URL path as final fallback
+    if (!data.address && finalUrl.includes('/place/')) {
+      const placeMatch = finalUrl.match(/\/place\/([^/@]+)/);
+      if (placeMatch) {
+        try {
+          const urlAddress = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+          // Only use if it looks like an address (has number or comma)
+          if (/\d/.test(urlAddress) || urlAddress.includes(',')) {
+            data.address = urlAddress;
+            console.log('[Scraper] Address extracted from URL path:', urlAddress);
+          }
+        } catch {
+          // Decode error, ignore
+        }
+      }
+    }
 
     console.log('[Scraper] Extracted:', data);
     return data;
@@ -252,9 +373,18 @@ export async function expandAndScrapeGoogleMapsUrl(shortUrl: string): Promise<{
 
       // Wait for content
       await page.waitForSelector('h1', { timeout: 10000 }).catch(() => {});
-      await new Promise(r => setTimeout(r, 1500));
 
-      // Extract data
+      // Increased wait time from 1.5s to 2.5s for more dynamic content to load
+      await new Promise(r => setTimeout(r, 2500));
+
+      // Try to wait specifically for address element (with timeout)
+      await page.waitForSelector('button[data-item-id="address"], [data-item-id="address"], div[data-section-id="ad"] button', {
+        timeout: 3000
+      }).catch(() => {
+        console.log('[Scraper] Address selector not found within timeout, continuing...');
+      });
+
+      // Extract data with fallback selectors
       const data = await page.evaluate((): ScrapedPlaceData => {
         const result: ScrapedPlaceData = {
           name: null,
@@ -266,9 +396,48 @@ export async function expandAndScrapeGoogleMapsUrl(shortUrl: string): Promise<{
           result.name = h1.textContent?.trim() || null;
         }
 
-        const addressBtn = document.querySelector('button[data-item-id="address"]');
-        if (addressBtn) {
-          result.address = addressBtn.textContent?.trim() || null;
+        // Get address using multiple fallback selectors
+        const addressSelectors = [
+          'button[data-item-id="address"]',         // Primary selector
+          '[data-item-id="address"]',               // Any element with this data attribute
+          'div[data-section-id="ad"] button',       // Address section button
+          'button[aria-label*="Address"]',          // Button with Address in aria-label
+          'button[aria-label*="address"]',          // Lowercase variant
+        ];
+
+        for (const selector of addressSelectors) {
+          try {
+            const addressEl = document.querySelector(selector);
+            if (addressEl) {
+              const text = addressEl.textContent?.trim();
+              // Validate it looks like an address (has numbers or common address words)
+              if (text && (
+                /\d/.test(text) ||                    // Contains numbers
+                /street|road|lane|ave|blvd/i.test(text) ||  // Common road words
+                /,/.test(text)                        // Contains comma (city, state)
+              )) {
+                result.address = text;
+                break;
+              }
+            }
+          } catch {
+            // Selector syntax error, skip
+          }
+        }
+
+        // Fallback: Extract address from aria-label on buttons
+        if (!result.address) {
+          const allButtons = document.querySelectorAll('button[aria-label]');
+          for (const btn of allButtons) {
+            const label = btn.getAttribute('aria-label') || '';
+            if (label.toLowerCase().includes('address:')) {
+              const addressPart = label.replace(/^address:\s*/i, '').trim();
+              if (addressPart) {
+                result.address = addressPart;
+                break;
+              }
+            }
+          }
         }
 
         // Get phone
@@ -291,6 +460,23 @@ export async function expandAndScrapeGoogleMapsUrl(shortUrl: string): Promise<{
 
         return result;
       });
+
+      // If address is still null, try to extract from URL path as final fallback
+      if (!data.address && expandedUrl.includes('/place/')) {
+        const placeMatch = expandedUrl.match(/\/place\/([^/@]+)/);
+        if (placeMatch) {
+          try {
+            const urlAddress = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+            // Only use if it looks like an address (has number or comma)
+            if (/\d/.test(urlAddress) || urlAddress.includes(',')) {
+              data.address = urlAddress;
+              console.log('[Scraper] Address extracted from URL path:', urlAddress);
+            }
+          } catch {
+            // Decode error, ignore
+          }
+        }
+      }
 
       return {
         success: true,
