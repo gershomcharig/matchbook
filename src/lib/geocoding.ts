@@ -3,10 +3,12 @@
  *
  * This module provides:
  * - forwardGeocode(): Convert address string to coordinates (for manual place entry)
+ * - reverseGeocode(): Convert coordinates to address (fallback when scraping fails)
  * - smartGeocode(): Smart geocoding that prefers scraped Google Maps data
  *
- * Note: Reverse geocoding is no longer needed as Puppeteer scrapes exact addresses
- * from Google Maps pages.
+ * Note: Reverse geocoding is used as a fallback when Puppeteer scraping fails
+ * (e.g., due to Google consent pages blocking access). The address may differ
+ * slightly from Google's data but is better than "Address not available".
  *
  * Nominatim is a free geocoding service provided by OpenStreetMap.
  * Usage Policy: https://operations.osmfoundation.org/policies/nominatim/
@@ -171,6 +173,79 @@ export async function forwardGeocode(
 }
 
 /**
+ * Reverse geocodes coordinates to get an address
+ *
+ * Uses OpenStreetMap Nominatim API (free, no API key required)
+ * Rate limit: 1 request per second
+ *
+ * @param lat - Latitude
+ * @param lng - Longitude
+ * @returns Formatted address string or null if reverse geocoding fails
+ */
+export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  try {
+    // Nominatim reverse endpoint
+    const url = new URL('https://nominatim.openstreetmap.org/reverse');
+    url.searchParams.set('lat', lat.toString());
+    url.searchParams.set('lon', lng.toString());
+    url.searchParams.set('format', 'json');
+    url.searchParams.set('addressdetails', '1');
+
+    // Make request with proper headers
+    const response = await fetch(url.toString(), {
+      headers: {
+        'User-Agent': 'Matchbook/1.0 (Personal place organizer)',
+      },
+    });
+
+    if (!response.ok) {
+      console.error('Nominatim reverse API error:', response.status, response.statusText);
+      return null;
+    }
+
+    const result: NominatimResponse = await response.json();
+
+    if (!result || !result.address) {
+      console.warn('No reverse geocoding result for coordinates:', lat, lng);
+      return null;
+    }
+
+    // Build formatted address from address components
+    const addr = result.address;
+    const addressParts: string[] = [];
+
+    // Street address
+    if (addr.house_number && addr.road) {
+      addressParts.push(`${addr.house_number} ${addr.road}`);
+    } else if (addr.road) {
+      addressParts.push(addr.road);
+    }
+
+    // City/town/village
+    const locality = addr.city || addr.town || addr.village;
+    if (locality) {
+      addressParts.push(locality);
+    }
+
+    // Postcode
+    if (addr.postcode) {
+      addressParts.push(addr.postcode);
+    }
+
+    // Only return if we got meaningful address parts
+    if (addressParts.length > 0) {
+      return addressParts.join(', ');
+    }
+
+    // Fallback to display_name if no structured address parts
+    return result.display_name || null;
+  } catch (error) {
+    console.error('Error reverse geocoding:', error);
+    return null;
+  }
+}
+
+/**
  * Result from smart geocoding
  */
 export interface SmartGeocodeResult {
@@ -179,6 +254,8 @@ export interface SmartGeocodeResult {
   lat: number;
   lng: number;
   source: 'url_coords' | 'forward_geocode';
+  /** How the address was obtained */
+  addressSource?: 'scraped' | 'reverse_geocoded' | 'unavailable';
   /** Additional place info from geocoding */
   placeInfo?: PlaceInfo;
 }
@@ -226,12 +303,28 @@ export async function smartGeocode(
     console.log('[smartGeocode] Have coords from URL, using them directly');
 
     const placeName = scrapedName || urlPlaceName || 'Unknown Place';
-    const address = scrapedAddress || 'Address not available';
+    let address: string;
+    let addressSource: 'scraped' | 'reverse_geocoded' | 'unavailable';
 
     if (scrapedAddress) {
+      // Best case: we have scraped address from Google Maps
+      address = scrapedAddress;
+      addressSource = 'scraped';
       console.log('[smartGeocode] Using scraped address from Google Maps:', scrapedAddress);
     } else {
-      console.log('[smartGeocode] No scraped address available');
+      // Fallback: reverse geocode the coordinates to get an approximate address
+      console.log('[smartGeocode] No scraped address, trying reverse geocoding...');
+      const reverseAddress = await reverseGeocode(extractedCoordinates.lat, extractedCoordinates.lng);
+
+      if (reverseAddress) {
+        address = reverseAddress;
+        addressSource = 'reverse_geocoded';
+        console.log('[smartGeocode] Using reverse-geocoded address:', reverseAddress);
+      } else {
+        address = 'Address not available';
+        addressSource = 'unavailable';
+        console.log('[smartGeocode] Reverse geocoding failed, address unavailable');
+      }
     }
 
     return {
@@ -240,6 +333,7 @@ export async function smartGeocode(
       lat: extractedCoordinates.lat,
       lng: extractedCoordinates.lng,
       source: 'url_coords',
+      addressSource: addressSource,
       placeInfo: {
         name: placeName,
         address: address,
