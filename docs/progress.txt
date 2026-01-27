@@ -1355,6 +1355,42 @@ Two-part fix for robustness:
 
 ---
 
+### 2026-01-27 (Bug Fix: Android Status Bar Flashing on Back Button)
+
+#### Problem
+When pressing the back button on Android, the status bar (with camera cutout) and navigation bar briefly appeared for ~4 seconds, shrinking the interface vertically each time.
+
+#### Root Cause
+The Layout component used `h-screen` (100vh) for its height. On Android PWAs, when the back button (popstate event) fires:
+1. The browser briefly shows/hides the system UI bars
+2. This changes the available viewport height
+3. `100vh` recalculates based on the changing viewport
+4. The layout "jumps" as it resizes to match
+
+This is a known issue with `vh` units on mobile browsers where the viewport height changes dynamically.
+
+#### Solution Implemented
+1. **Changed `h-screen` to `h-dvh`** in Layout.tsx
+   - `dvh` (dynamic viewport height) handles dynamic viewport changes smoothly
+   - `100dvh` = the current actual viewport height (updates smoothly)
+   - vs `100vh` = viewport height when bars are hidden (causes jumping)
+
+2. **Added `viewportFit: "cover"`** to viewport config in layout.tsx
+   - Properly handles notches and safe areas on mobile devices
+
+3. **Added CSS fallback** in globals.css for browsers without dvh support
+   - Falls back to `100vh` for older browsers
+
+#### Files Modified:
+- src/components/Layout.tsx - Changed `h-screen` to `h-dvh`
+- src/app/layout.tsx - Added `viewportFit: "cover"` to viewport config
+- src/app/globals.css - Added `@supports not (height: 100dvh)` fallback
+
+#### Verification:
+- Build passes successfully
+
+---
+
 ## Next Steps (from roadmap.md)
 
 1. Phase 16: Deployment (Vercel production testing)

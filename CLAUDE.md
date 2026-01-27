@@ -30,7 +30,10 @@ When asked to work on the next task or continue development:
    - Create/update test in `tests/e2e/` for the new feature
    - Run `npm run test:e2e` to verify tests pass
    - Add `data-testid` attributes to new components if needed
-4. **Commit the changes** if the user requests it
+4. **Commit and push changes** - After the feature/fix is tested and working:
+   - Commit all related changes with a descriptive message
+   - Push to remote immediately
+   - This applies to both new features AND bug fixes
 
 ## Progress Tracking
 

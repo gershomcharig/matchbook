@@ -682,7 +682,7 @@ export default function Layout({
   }, [showToast]);
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex">
+    <div className="h-dvh w-screen overflow-hidden flex">
       {/* Map area - fills available space */}
       <div className="flex-1 relative">
         {/* Top bar buttons */}
