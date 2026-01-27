@@ -14,9 +14,49 @@ import {
   MapPin,
   Pencil,
   Tag,
+  ChevronDown,
 } from 'lucide-react';
 import { type PlaceWithCollection, type Tag as TagType } from '@/app/actions/places';
 import { findIconByName } from '@/lib/icons';
+
+/**
+ * Format a place type string for display
+ * e.g., "italian_restaurant" -> "Italian Restaurant"
+ */
+function formatPlaceType(type: string): string {
+  return type
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Get the current day's opening hours and status
+ */
+function getOpeningStatus(openingHours: Record<string, unknown> | null): {
+  isOpen: boolean | null;
+  todayHours: string | null;
+  allHours: string[];
+} {
+  if (!openingHours || typeof openingHours !== 'object') {
+    return { isOpen: null, todayHours: null, allHours: [] };
+  }
+
+  const weekdays = (openingHours as { weekdays?: string[] }).weekdays;
+  if (!Array.isArray(weekdays) || weekdays.length === 0) {
+    return { isOpen: null, todayHours: null, allHours: [] };
+  }
+
+  // Get current day (0 = Sunday in JS, but Google uses Monday = 0)
+  const jsDay = new Date().getDay();
+  const googleDay = jsDay === 0 ? 6 : jsDay - 1; // Convert to Mon=0 format
+  const todayHours = weekdays[googleDay] || null;
+
+  // Simple heuristic to check if currently open (not always accurate)
+  // A more accurate approach would require parsing the times
+  const isOpen = todayHours && !todayHours.toLowerCase().includes('closed') ? true : null;
+
+  return { isOpen, todayHours, allHours: weekdays };
+}
 
 interface PlaceDetailsPanelProps {
   /** The place to display */
@@ -45,10 +85,12 @@ export default function PlaceDetailsPanel({
   onEdit,
 }: PlaceDetailsPanelProps) {
   const [copied, setCopied] = useState(false);
+  const [hoursExpanded, setHoursExpanded] = useState(false);
 
-  // Reset copied state when place changes
+  // Reset state when place changes
   useEffect(() => {
     setCopied(false);
+    setHoursExpanded(false);
   }, [place?.id]);
 
   // Handle copy address
@@ -102,6 +144,12 @@ export default function PlaceDetailsPanel({
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 truncate">
             {place.name}
           </h2>
+          {/* Place types - shown as inline text */}
+          {place.types && place.types.length > 0 && (
+            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400 truncate">
+              {place.types.slice(0, 3).map(formatPlaceType).join(' · ')}
+            </p>
+          )}
           {/* Collection badge */}
           {place.collection && (
             <button
@@ -167,31 +215,102 @@ export default function PlaceDetailsPanel({
           </div>
         )}
 
-        {/* Rating */}
+        {/* Rating with count */}
         {place.rating !== null && place.rating !== undefined && (
           <div className="flex items-center gap-3">
-            <Star size={18} className="text-amber-500 fill-amber-500 flex-shrink-0" />
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Show filled and empty stars */}
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  size={14}
+                  className={
+                    star <= Math.round(place.rating!)
+                      ? 'text-amber-500 fill-amber-500'
+                      : 'text-zinc-300 dark:text-zinc-600'
+                  }
+                />
+              ))}
+            </div>
             <span className="text-sm text-zinc-600 dark:text-zinc-300">
-              {place.rating.toFixed(1)} rating
+              {place.rating.toFixed(1)}
+              {place.user_ratings_total && (
+                <span className="text-zinc-400 dark:text-zinc-500">
+                  {' '}({place.user_ratings_total.toLocaleString()} reviews)
+                </span>
+              )}
             </span>
           </div>
         )}
 
-        {/* Opening hours */}
-        {place.opening_hours && Object.keys(place.opening_hours).length > 0 && (
-          <div className="flex items-start gap-3">
-            <Clock size={18} className="text-zinc-400 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-zinc-600 dark:text-zinc-300">
-              {typeof place.opening_hours === 'string' ? (
-                <p>{place.opening_hours}</p>
-              ) : (
-                <p className="text-zinc-500 dark:text-zinc-400 italic">
-                  Hours available
-                </p>
-              )}
+        {/* Opening hours - expandable */}
+        {(() => {
+          const { isOpen, todayHours, allHours } = getOpeningStatus(place.opening_hours);
+          if (allHours.length === 0) return null;
+
+          return (
+            <div className="flex items-start gap-3">
+              <Clock size={18} className="text-zinc-400 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                {/* Header with status and toggle */}
+                <button
+                  onClick={() => setHoursExpanded(!hoursExpanded)}
+                  className="flex items-center gap-2 text-sm w-full text-left"
+                >
+                  {isOpen !== null && (
+                    <span
+                      className={`font-medium ${
+                        isOpen
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                      }`}
+                    >
+                      {isOpen ? 'Open' : 'Closed'}
+                    </span>
+                  )}
+                  {todayHours && (
+                    <span className="text-zinc-600 dark:text-zinc-300 truncate">
+                      {todayHours}
+                    </span>
+                  )}
+                  <ChevronDown
+                    size={16}
+                    className={`text-zinc-400 transition-transform flex-shrink-0 ml-auto ${
+                      hoursExpanded ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {/* Expanded hours list */}
+                {hoursExpanded && (
+                  <div className="mt-2 space-y-1">
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(
+                      (day, index) => {
+                        const jsDay = new Date().getDay();
+                        const googleToday = jsDay === 0 ? 6 : jsDay - 1;
+                        const isToday = index === googleToday;
+
+                        return (
+                          <div
+                            key={day}
+                            className={`flex justify-between text-xs ${
+                              isToday
+                                ? 'text-amber-600 dark:text-amber-400 font-medium'
+                                : 'text-zinc-500 dark:text-zinc-400'
+                            }`}
+                          >
+                            <span>{day}</span>
+                            <span>{allHours[index] || 'N/A'}</span>
+                          </div>
+                        );
+                      }
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Website */}
         {place.website && (

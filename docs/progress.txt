@@ -6,9 +6,9 @@ Read this file at the start of each session to maintain context and avoid repeat
 ---
 
 ## Current Status
-**Last Updated**: 2026-01-26
-**Current Phase**: Phase 17.1 COMPLETE (GPS Location)
-**Next Step**: Phase 16 - Production Testing
+**Last Updated**: 2026-01-27
+**Current Phase**: API Data Pipeline Enhancement COMPLETE
+**Next Step**: Phase 16 - Production Testing (add DB columns first)
 
 ---
 
@@ -1128,6 +1128,65 @@ Replaced the entire extraction mechanism with **Google Maps Places API** - the a
   - Added mapRef with MapHandle type
   - Integrated useGeolocation hook
   - Passes userLocation and callbacks through Layout to Map
+
+---
+
+### 2026-01-27 (Enhancement: API Data Pipeline & PlaceDetailsPanel UI)
+
+#### Problem
+Google Places API was returning additional data (rating, website, phone, opening hours, types, userRatingsTotal) but this data was not being passed through the pipeline and stored in the database. The PlaceDetailsPanel also needed UI enhancements to display this data properly.
+
+#### Solution Implemented
+
+**1. Extended ExtractedPlace interface (src/components/AddPlaceModal.tsx)**
+- Added: types, website, phone, rating, userRatingsTotal, openingHours
+
+**2. Extended Place and CreatePlaceInput interfaces (src/app/actions/places.ts)**
+- Added to Place: user_ratings_total, types
+- Added to CreatePlaceInput: openingHours, userRatingsTotal, types
+- Updated createPlace() to use all new fields when inserting
+
+**3. Updated Layout.tsx**
+- savePlaceFromPaste() now passes all API fields to createPlace()
+- Both paste handlers (button click & global listener) include all API data when building ExtractedPlace
+
+**4. Updated places-api.ts**
+- Extended ExtractPlaceResult.place to include userRatingsTotal
+- Both extractPlaceFromUrl() and searchPlaceByText() now return userRatingsTotal
+
+**5. Enhanced PlaceDetailsPanel UI (src/components/PlaceDetailsPanel.tsx)**
+- Added formatPlaceType() helper to format "italian_restaurant" → "Italian Restaurant"
+- Added getOpeningStatus() helper to parse opening hours and determine current status
+- Place types shown below name (first 3 types, dot-separated)
+- Rating now shows 5 visual stars (filled/empty) + numeric value + review count
+- Opening hours are expandable/collapsible with:
+  - Open/Closed status indicator
+  - Today's hours shown by default
+  - Full week schedule when expanded
+  - Current day highlighted
+- Added ChevronDown icon import for expandable hours
+
+**6. Database Columns Required (user action)**
+- `user_ratings_total` - integer, nullable
+- `types` - text array, nullable
+
+SQL to run in Supabase:
+```sql
+ALTER TABLE places ADD COLUMN user_ratings_total INTEGER;
+ALTER TABLE places ADD COLUMN types TEXT[];
+```
+
+#### Files Modified:
+- src/components/AddPlaceModal.tsx - Extended ExtractedPlace interface
+- src/app/actions/places.ts - Extended interfaces, updated createPlace()
+- src/components/Layout.tsx - Pass all API fields through
+- src/app/actions/places-api.ts - Include userRatingsTotal in results
+- src/components/PlaceDetailsPanel.tsx - Enhanced UI with types, stars, expandable hours
+
+#### Verification:
+- TypeScript compilation passes
+- No lint errors in modified files
+- User needs to add DB columns before testing
 
 ---
 

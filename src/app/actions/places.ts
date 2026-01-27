@@ -19,6 +19,8 @@ export interface Place {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  user_ratings_total: number | null;
+  types: string[] | null;
 }
 
 export interface CreatePlaceInput {
@@ -32,6 +34,9 @@ export interface CreatePlaceInput {
   website?: string;
   phone?: string;
   notes?: string;
+  openingHours?: string[];
+  userRatingsTotal?: number;
+  types?: string[];
 }
 
 export interface CreatePlaceResult {
@@ -44,8 +49,21 @@ export interface CreatePlaceResult {
  * Create a new place in the database
  */
 export async function createPlace(input: CreatePlaceInput): Promise<CreatePlaceResult> {
-  const { name, address, lat, lng, googleMapsUrl, collectionId, rating, website, phone, notes } =
-    input;
+  const {
+    name,
+    address,
+    lat,
+    lng,
+    googleMapsUrl,
+    collectionId,
+    rating,
+    website,
+    phone,
+    notes,
+    openingHours,
+    userRatingsTotal,
+    types,
+  } = input;
 
   // Validate input
   if (!name || name.trim().length === 0) {
@@ -76,10 +94,12 @@ export async function createPlace(input: CreatePlaceInput): Promise<CreatePlaceR
         google_maps_url: googleMapsUrl || null,
         collection_id: finalCollectionId,
         rating: rating || null,
-        opening_hours: null,
+        opening_hours: openingHours ? { weekdays: openingHours } : null,
         website: website || null,
         phone: phone || null,
         notes: notes || null,
+        user_ratings_total: userRatingsTotal || null,
+        types: types || null,
         created_at: now,
         updated_at: now,
         deleted_at: null,

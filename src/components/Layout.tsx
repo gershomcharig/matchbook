@@ -297,6 +297,12 @@ export default function Layout({
       lng: data.place.lng,
       googleMapsUrl: data.place.googleMapsUrl,
       collectionId: data.collectionId,
+      rating: data.place.rating,
+      website: data.place.website,
+      phone: data.place.phone,
+      openingHours: data.place.openingHours,
+      userRatingsTotal: data.place.userRatingsTotal,
+      types: data.place.types,
     });
 
     setIsAddingPlace(false);
@@ -521,6 +527,12 @@ export default function Layout({
               placeType: result.place.types?.[0] || null,
               city: null,
               country: null,
+              types: result.place.types,
+              website: result.place.website,
+              phone: result.place.phone,
+              rating: result.place.rating,
+              userRatingsTotal: result.place.userRatingsTotal,
+              openingHours: result.place.openingHours,
             };
 
             setExtractedPlace(extractedPlaceData);
@@ -579,6 +591,12 @@ export default function Layout({
               placeType: result.place.types?.[0] || null,
               city: null,
               country: null,
+              types: result.place.types,
+              website: result.place.website,
+              phone: result.place.phone,
+              rating: result.place.rating,
+              userRatingsTotal: result.place.userRatingsTotal,
+              openingHours: result.place.openingHours,
             };
 
             console.log('[All Extracted Place Data]', extractedPlaceData);

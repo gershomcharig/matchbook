@@ -26,6 +26,7 @@ export interface ExtractPlaceResult {
     website?: string;
     phone?: string;
     rating?: number;
+    userRatingsTotal?: number;
     openingHours?: string[];
   };
   error?: string;
@@ -188,6 +189,7 @@ export async function extractPlaceFromUrl(mapsUrl: string): Promise<ExtractPlace
         website: placeDetails.website,
         phone: placeDetails.phone,
         rating: placeDetails.rating,
+        userRatingsTotal: placeDetails.userRatingsTotal,
         openingHours: placeDetails.openingHours,
       },
     };
@@ -252,6 +254,7 @@ export async function searchPlaceByText(query: string): Promise<ExtractPlaceResu
         website: placeDetails.website,
         phone: placeDetails.phone,
         rating: placeDetails.rating,
+        userRatingsTotal: placeDetails.userRatingsTotal,
         openingHours: placeDetails.openingHours,
       },
     };

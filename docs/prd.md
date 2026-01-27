@@ -56,9 +56,15 @@ When viewing a place, display:
 - Button to copy address to clipboard
 
 ### Adding Places (Key Feature)
-- **Paste to add**: Simply pasting a Google Maps link anywhere in the app triggers place detection
+
+**Primary input methods**:
+1. **Paste shortened Google Maps URL**: Links like `https://maps.app.goo.gl/...` (copied from Google Maps share button)
+2. **Paste full Google Maps URL**: Links like `https://www.google.com/maps/place/...` (copied from browser address bar)
+3. **Android share sheet**: Share directly from Google Maps app to Matchbook via the native Android share panel (requires PWA installation)
+
+**How it works**:
+- Simply pasting a Google Maps link anywhere in the app triggers place detection
 - Auto-extracts: place name, address, coordinates, Google Maps link, rating, opening hours, website, phone number
-- Uses free alternatives (web scraping/geocoding) instead of Google Places API
 - After paste, prompts user to select which collection to save to
 - Can paste multiple links at once
 - **Mobile**: Share sheet integration via PWA (Android) + visible paste button always shown
@@ -175,3 +181,4 @@ The collections panel is the main way to explore places in list format. It opens
 11. **Keyboard shortcuts**: V for view toggle, / for search, Escape to close, etc.
 12. **Read Later for articles**: Save article links to process later (alternative to immediate extraction)
 13. Make "Paste link" button more visible if a google maps URL (both full-size or shortened) is detected in the clipboard.
+14. **Import Google Maps lists**: Paste a link to a Google Maps list to import all places at once into a new collection named after the original list

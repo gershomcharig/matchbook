@@ -22,6 +22,13 @@ export interface ExtractedPlace {
   placeType?: string | null;
   city?: string | null;
   country?: string | null;
+  // Additional API data
+  types?: string[];
+  website?: string;
+  phone?: string;
+  rating?: number;
+  userRatingsTotal?: number;
+  openingHours?: string[];
 }
 
 interface AddPlaceModalProps {
