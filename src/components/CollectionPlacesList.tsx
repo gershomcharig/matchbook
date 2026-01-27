@@ -109,6 +109,7 @@ export default function CollectionPlacesList({
             onClick={onBack}
             className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             aria-label="Back to collections"
+            data-testid="collection-back-button"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -217,6 +218,7 @@ export default function CollectionPlacesList({
                 <button
                   key={place.id}
                   onClick={() => onPlaceClick(place.id)}
+                  data-testid="place-item"
                   className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors ${
                     isSelected
                       ? 'bg-amber-50 dark:bg-amber-900/20'

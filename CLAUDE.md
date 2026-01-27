@@ -26,7 +26,11 @@ When asked to work on the next task or continue development:
 ### After Completing Any Task
 1. **Update `docs/roadmap.md`** - Change `[ ]` to `[x]` for completed items
 2. **Update `docs/progress.txt`** - Log what was done, decisions made, any issues
-3. **Commit the changes** if the user requests it
+3. **Write or update E2E tests** - For user-facing features:
+   - Create/update test in `tests/e2e/` for the new feature
+   - Run `npm run test:e2e` to verify tests pass
+   - Add `data-testid` attributes to new components if needed
+4. **Commit the changes** if the user requests it
 
 ## Progress Tracking
 
@@ -49,3 +53,26 @@ This file serves as persistent memory across sessions to prevent context rot and
 2. **Decisions made**: Document architectural choices and why
 3. **Blockers encountered**: What went wrong and attempted solutions
 4. **Failed approaches**: What didn't work and why (critical for avoiding repeated mistakes)
+
+## Testing
+
+### E2E Tests with Playwright
+- Tests live in `tests/e2e/`
+- Run tests: `npm run test:e2e`
+- Run with UI: `npm run test:e2e:ui`
+- Run headed (visible browser): `npm run test:e2e:headed`
+
+### When to Write Tests
+- **Always test**: User interaction flows (paste, panels, navigation, filters)
+- **Skip tests**: Pure styling changes, documentation updates
+- **Update tests**: When modifying existing user-facing behavior
+
+### Test Naming Convention
+- `feature-name.spec.ts` (e.g., `back-button.spec.ts`, `place-paste.spec.ts`)
+- Test descriptions should be readable: "should close panel on back button press"
+
+### Environment Variables for Tests
+Tests require `TEST_PASSWORD` environment variable to be set. Add it to `.env.local`:
+```
+TEST_PASSWORD=your-test-password
+```

@@ -1248,6 +1248,113 @@ The browser/Android back button had no effect on panel states - pressing it whil
 
 ---
 
+---
+
+### 2026-01-27 (Enhancement: Playwright E2E Testing Setup)
+
+#### Purpose
+Add end-to-end testing infrastructure to test user interactions on new features.
+
+#### Changes Made
+
+**1. Installed dependencies:**
+- `@playwright/test` - Playwright test framework
+- Chromium browser binary via `npx playwright install chromium`
+
+**2. Created Playwright configuration (playwright.config.ts)**
+- Test directory: `tests/e2e/`
+- Base URL: `http://localhost:3000`
+- Projects: Desktop Chrome, Mobile Chrome (Pixel 5)
+- webServer config to auto-start Next.js dev server
+
+**3. Created test structure:**
+- tests/e2e/fixtures/auth.ts - Auto-login fixture using TEST_PASSWORD env var
+- tests/e2e/fixtures/test-helpers.ts - Helper functions (waitForMapLoad, openCollectionsPanel, etc.)
+- tests/e2e/back-button.spec.ts - Initial tests for back button navigation
+
+**4. Added data-testid attributes to components:**
+- Layout.tsx: collections-button, collections-panel, collections-backdrop
+- CollectionsList.tsx: collection-item
+- CollectionPlacesList.tsx: collection-back-button, place-item
+- PlaceDetailsPanel.tsx: place-details-panel
+
+**5. Added npm scripts (package.json):**
+- `test:e2e` - Run all tests headless
+- `test:e2e:ui` - Run with Playwright UI
+- `test:e2e:headed` - Run with visible browser
+
+**6. Updated configuration files:**
+- .gitignore - Added Playwright artifacts (/test-results/, /playwright-report/, etc.)
+- .env.local.example - Added TEST_PASSWORD env var documentation
+- CLAUDE.md - Added testing instructions section
+
+#### Running Tests
+```bash
+# Run all tests
+npm run test:e2e
+
+# Run with UI
+npm run test:e2e:ui
+
+# Run headed (visible browser)
+npm run test:e2e:headed
+```
+
+#### Environment Variable Required
+Add `TEST_PASSWORD=your-app-password` to `.env.local`
+
+#### Files Created:
+- playwright.config.ts
+- tests/e2e/fixtures/auth.ts
+- tests/e2e/fixtures/test-helpers.ts
+- tests/e2e/back-button.spec.ts
+
+#### Files Modified:
+- package.json
+- .gitignore
+- .env.local.example
+- CLAUDE.md
+- src/components/Layout.tsx
+- src/components/CollectionsList.tsx
+- src/components/CollectionPlacesList.tsx
+- src/components/PlaceDetailsPanel.tsx
+
+#### Verification:
+- `npx playwright test --list` shows 8 tests across 2 projects
+
+---
+
+### 2026-01-27 (Bug Fix: Place Panel Appearing Behind Collections Panel)
+
+#### Problem
+After clicking a place inside a collection, the place details panel appeared BEHIND the collections panel instead of on top.
+
+#### Root Cause
+- Both panels had `z-50` z-index
+- When both visible, DOM order determined stacking
+- Collections panel (in Layout.tsx) came after `{children}` (containing PlaceDetailsPanel), so it appeared on top
+- The `collectionsOpen` state from page.tsx remained `undefined` when clicking a place, so the collections panel didn't close
+
+#### Solution Implemented
+Two-part fix for robustness:
+
+**1. Raised PlaceDetailsPanel z-index (immediate fix)**
+- Changed `z-50` to `z-[60]` in PlaceDetailsPanel.tsx line 399
+- Ensures place panel is always above collections panel
+
+**2. Explicitly close collections from page.tsx (root cause fix)**
+- Added `setCollectionsOpen(false)` in handleMarkerClick when `fromCollectionId` is provided
+- This ensures the external prop takes precedence and closes the collections panel
+
+#### Files Modified:
+- src/components/PlaceDetailsPanel.tsx - Changed z-50 to z-[60]
+- src/app/page.tsx - Added setCollectionsOpen(false) in handleMarkerClick
+
+#### Verification:
+- All back-button E2E tests pass (2 passed, 6 skipped)
+
+---
+
 ## Next Steps (from roadmap.md)
 
 1. Phase 16: Deployment (Vercel production testing)

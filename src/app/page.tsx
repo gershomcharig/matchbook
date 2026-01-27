@@ -272,6 +272,7 @@ function HomeContent() {
         // Track where the place was opened from
         if (fromCollectionId) {
           setPlaceOpenedFrom({ source: 'collection', collectionId: fromCollectionId });
+          setCollectionsOpen(false); // Explicitly close collections panel so place panel appears on top
           historyNav.pushState({ view: 'place', source: 'collection', collectionId: fromCollectionId });
         } else {
           setPlaceOpenedFrom({ source: 'map' });

@@ -396,7 +396,7 @@ export default function PlaceDetailsPanel({
   // Slide-up panel
   return (
     <div
-      className={`fixed inset-0 z-50 transition-opacity duration-200 ${
+      className={`fixed inset-0 z-[60] transition-opacity duration-200 ${
         isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
     >
@@ -411,6 +411,7 @@ export default function PlaceDetailsPanel({
         className={`absolute bottom-0 left-0 right-0 max-h-[85vh] bg-white dark:bg-zinc-900 rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
+        data-testid="place-details-panel"
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1">

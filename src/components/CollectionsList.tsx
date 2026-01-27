@@ -137,6 +137,7 @@ export default function CollectionsList({
             return (
               <div
                 key={collection.id}
+                data-testid="collection-item"
                 className={`
                   group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
                   ${
