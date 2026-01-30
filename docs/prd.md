@@ -63,8 +63,7 @@ When viewing a place, display:
 - After paste, prompts user to select which collection to save to
 - Can paste multiple links at once
 - **Mobile**: Share sheet integration via PWA (Android) + visible paste button always shown
-- **Manual entry**: Option to add places by typing name/address (geocoded to get coordinates)
-- **Error handling**: If link processing fails, show error and offer manual entry fallback
+- **Error handling**: If link processing fails, show error message
 - **Duplicates**: Warn if place already exists (by coordinates or link) but allow adding anyway
 
 ### How Place Data Extraction Works
@@ -96,17 +95,6 @@ On Android, you can share directly from the Google Maps app to Matchbook using t
 4. **Add to Collection**: You're prompted to select a collection, then the place is saved
 
 **Note**: This requires installing Matchbook as a PWA on Android. iOS does not support the Share Target API.
-
-#### Manual Place Entry
-
-When adding a place manually by typing name/address:
-
-1. User enters a place name and/or address
-2. Uses **Google Maps Text Search API** to find the place
-3. Returns accurate coordinates and formatted address from Google
-4. Place is saved with the search result data
-
-This ensures manual entries also get accurate Google Maps data, unlike previous Nominatim-based geocoding which could return different addresses.
 
 ### Collections Panel (Primary Navigation)
 The collections panel is the main way to explore places in list format. It opens as a slide-up panel from the bottom of the screen.
@@ -189,22 +177,6 @@ This section documents all user interactions with step-by-step descriptions of h
 1. User copies a Google Maps link
 2. User taps "Paste Link" button (orange, bottom center)
 3. Same flow as above: modal opens, user selects collection, saves
-
-### Adding a Place Manually
-
-**Goal**: Save a place by typing name/address
-
-1. User clicks "Add Place" button (top-right, plus icon)
-2. Modal opens with form fields:
-   - Name (required)
-   - Address (required)
-   - Collection dropdown
-3. User types place name and address
-4. User selects a collection
-5. User clicks "Save"
-6. App searches Google Maps for the location
-7. If found: Place saved, appears on map
-8. If not found: Error message shown
 
 ### Handling Duplicate Places
 

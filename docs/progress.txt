@@ -1623,6 +1623,42 @@ To re-enable trash:
 
 ---
 
+---
+
+### 2026-01-30 (Feature Removal: Manual Place Entry)
+
+#### Purpose
+Remove the manual place addition feature (typing name/address to add places) from the UI to simplify the app. Users should add places by pasting Google Maps links only.
+
+#### Files Deleted:
+- src/components/ManualPlaceModal.tsx
+
+#### Files Modified:
+- src/components/Layout.tsx
+  - Removed ManualPlaceModal import
+  - Removed MapPinPlus import (no longer used)
+  - Removed searchPlaceByText import (no longer used)
+  - Removed state: isManualPlaceOpen, isAddingManualPlace, manualPlaceError
+  - Removed handlers: handleSaveManualPlace, saveManualPlaceWithData, handleCloseManualPlace
+  - Simplified pendingPlaceData type (removed 'manual' type and manualData field)
+  - Simplified handleAddDuplicateAnyway (no longer handles manual case)
+  - Removed "Add Place" button from top bar (orange MapPinPlus button)
+  - Removed ManualPlaceModal rendering
+
+- src/app/actions/places-api.ts
+  - Removed searchPlaceByText() function (only used for manual entry)
+
+- docs/prd.md
+  - Removed "Manual entry" bullet from Adding Places section
+  - Removed "Manual Place Entry" section from How Place Data Extraction Works
+  - Removed "Adding a Place Manually" user story
+
+#### Verification:
+- Build passes successfully (npm run build)
+- All E2E tests pass (2 passed, 10 skipped)
+
+---
+
 ## Next Steps (from roadmap.md)
 
 1. Phase 16: Deployment (Vercel production testing)

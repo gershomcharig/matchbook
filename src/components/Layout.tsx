@@ -2,14 +2,13 @@
 
 import { ReactNode, useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Layers, MapPinPlus, ClipboardPaste, Locate } from 'lucide-react';
+import { LogOut, Layers, ClipboardPaste, Locate } from 'lucide-react';
 import { clearSessionToken } from '@/lib/auth';
 import { detectMapsUrl } from '@/lib/maps';
-import { extractPlaceFromUrl, searchPlaceByText } from '@/app/actions/places-api';
+import { extractPlaceFromUrl } from '@/app/actions/places-api';
 import NewCollectionModal from './NewCollectionModal';
 import EditCollectionModal from './EditCollectionModal';
 import AddPlaceModal, { type ExtractedPlace } from './AddPlaceModal';
-import ManualPlaceModal from './ManualPlaceModal';
 import DuplicateWarningModal from './DuplicateWarningModal';
 import { InstallPrompt } from './InstallPrompt';
 import CollectionsList from './CollectionsList';
@@ -92,25 +91,13 @@ export default function Layout({
   const [extractedPlace, setExtractedPlace] = useState<ExtractedPlace | null>(null);
   const [isAddingPlace, setIsAddingPlace] = useState(false);
 
-  // Manual Place modal state
-  const [isManualPlaceOpen, setIsManualPlaceOpen] = useState(false);
-  const [isAddingManualPlace, setIsAddingManualPlace] = useState(false);
-  const [manualPlaceError, setManualPlaceError] = useState<string | null>(null);
-
   // Duplicate warning modal state
   const [isDuplicateWarningOpen, setIsDuplicateWarningOpen] = useState(false);
   const [duplicateExistingPlace, setDuplicateExistingPlace] = useState<PlaceWithCollection | null>(null);
   const [duplicateMatchType, setDuplicateMatchType] = useState<'coordinates' | 'url' | null>(null);
   const [pendingPlaceData, setPendingPlaceData] = useState<{
-    type: 'paste' | 'manual';
-    place?: ExtractedPlace;
+    place: ExtractedPlace;
     collectionId: string;
-    manualData?: {
-      name: string;
-      address: string;
-      lat: number;
-      lng: number;
-    };
   } | null>(null);
   const [isAddingDuplicate, setIsAddingDuplicate] = useState(false);
 
@@ -261,7 +248,6 @@ export default function Layout({
       setDuplicateExistingPlace(duplicateCheck.existingPlace);
       setDuplicateMatchType(duplicateCheck.matchType || null);
       setPendingPlaceData({
-        type: 'paste',
         place: data.place,
         collectionId: data.collectionId,
       });
@@ -313,108 +299,6 @@ export default function Layout({
     setExtractedPlace(null);
   };
 
-  // Handle saving a manually entered place
-  const handleSaveManualPlace = async (data: {
-    name: string;
-    address: string;
-    collectionId: string;
-  }) => {
-    setIsAddingManualPlace(true);
-    setManualPlaceError(null);
-    console.log('[Saving Manual Place]', data);
-
-    // Use Places API Text Search to find the place
-    // Combine name and address for better search results
-    const searchQuery = data.name ? `${data.name}, ${data.address}` : data.address;
-    const searchResult = await searchPlaceByText(searchQuery);
-
-    if (!searchResult.success || !searchResult.place) {
-      if (searchResult.apiKeyConfigured === false) {
-        setManualPlaceError('Google Maps API key not configured. Please check your environment settings.');
-      } else {
-        setManualPlaceError(searchResult.error || 'Could not find location. Please try a different address.');
-      }
-      setIsAddingManualPlace(false);
-      return;
-    }
-
-    console.log('[Places API Search Result]', searchResult.place);
-
-    // Check for duplicates
-    const duplicateCheck = await checkForDuplicates(
-      searchResult.place.lat,
-      searchResult.place.lng,
-      searchResult.place.googleMapsUrl || null
-    );
-
-    if (duplicateCheck.success && duplicateCheck.isDuplicate && duplicateCheck.existingPlace) {
-      // Show duplicate warning modal
-      setIsAddingManualPlace(false);
-      setDuplicateExistingPlace(duplicateCheck.existingPlace);
-      setDuplicateMatchType(duplicateCheck.matchType || null);
-      setPendingPlaceData({
-        type: 'manual',
-        collectionId: data.collectionId,
-        manualData: {
-          name: data.name || searchResult.place.name,
-          address: searchResult.place.address,
-          lat: searchResult.place.lat,
-          lng: searchResult.place.lng,
-        },
-      });
-      setIsManualPlaceOpen(false);
-      setIsDuplicateWarningOpen(true);
-      return;
-    }
-
-    // No duplicate found, proceed with saving
-    // Use user-provided name if available, otherwise use API result
-    await saveManualPlaceWithData({
-      name: data.name || searchResult.place.name,
-      address: searchResult.place.address,
-      lat: searchResult.place.lat,
-      lng: searchResult.place.lng,
-      collectionId: data.collectionId,
-    });
-  };
-
-  // Actually save a manual place (called after duplicate check or when adding anyway)
-  const saveManualPlaceWithData = async (data: {
-    name: string;
-    address: string;
-    lat: number;
-    lng: number;
-    collectionId: string;
-  }) => {
-    setIsAddingManualPlace(true);
-
-    // Create the place
-    const result = await createPlace({
-      name: data.name,
-      address: data.address,
-      lat: data.lat,
-      lng: data.lng,
-      collectionId: data.collectionId,
-    });
-
-    if (!result.success || !result.place) {
-      setManualPlaceError(result.error || 'Failed to save place. Please try again.');
-      setIsAddingManualPlace(false);
-      return;
-    }
-
-    console.log('[Manual Place Saved Successfully]', result.place);
-    setIsAddingManualPlace(false);
-    setIsManualPlaceOpen(false);
-    showToast('success', `"${data.name}" added to your collection!`);
-    onPlaceAdded?.();
-  };
-
-  const handleCloseManualPlace = () => {
-    setIsManualPlaceOpen(false);
-    setManualPlaceError(null);
-  };
-
   // Handle closing duplicate warning modal
   const handleCloseDuplicateWarning = () => {
     setIsDuplicateWarningOpen(false);
@@ -429,17 +313,10 @@ export default function Layout({
 
     setIsAddingDuplicate(true);
 
-    if (pendingPlaceData.type === 'paste' && pendingPlaceData.place) {
-      await savePlaceFromPaste({
-        place: pendingPlaceData.place,
-        collectionId: pendingPlaceData.collectionId,
-      });
-    } else if (pendingPlaceData.type === 'manual' && pendingPlaceData.manualData) {
-      await saveManualPlaceWithData({
-        ...pendingPlaceData.manualData,
-        collectionId: pendingPlaceData.collectionId,
-      });
-    }
+    await savePlaceFromPaste({
+      place: pendingPlaceData.place,
+      collectionId: pendingPlaceData.collectionId,
+    });
 
     setIsAddingDuplicate(false);
     handleCloseDuplicateWarning();
@@ -654,15 +531,6 @@ export default function Layout({
             <Layers className="w-4 h-4" />
           </button>
 
-          {/* Add Place button (primary) */}
-          <button
-            onClick={() => setIsManualPlaceOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:from-amber-400 hover:to-orange-400 transition-all"
-            title="Add place"
-          >
-            <MapPinPlus className="w-4 h-4" />
-          </button>
-
           {/* Logout button */}
           <button
             onClick={handleLogout}
@@ -693,20 +561,11 @@ export default function Layout({
         isSubmitting={isAddingPlace}
       />
 
-      {/* Manual Place Modal */}
-      <ManualPlaceModal
-        isOpen={isManualPlaceOpen}
-        onClose={handleCloseManualPlace}
-        onSave={handleSaveManualPlace}
-        isSubmitting={isAddingManualPlace}
-        error={manualPlaceError}
-      />
-
       {/* Duplicate Warning Modal */}
       <DuplicateWarningModal
         isOpen={isDuplicateWarningOpen}
         onClose={handleCloseDuplicateWarning}
-        newPlaceName={pendingPlaceData?.type === 'paste' ? pendingPlaceData.place?.name || '' : pendingPlaceData?.manualData?.name || ''}
+        newPlaceName={pendingPlaceData?.place?.name || ''}
         existingPlace={duplicateExistingPlace}
         matchType={duplicateMatchType}
         onAddAnyway={handleAddDuplicateAnyway}
