@@ -119,7 +119,7 @@ const MapComponent = forwardRef<MapHandle, MapProps>(function Map(
         zoom: INITIAL_ZOOM,
       }}
       mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-      mapStyle="mapbox://styles/gercha/cml0xxp8s00om01pael9t09kk"
+      mapStyle="mapbox://styles/gercha/cml0ysrtg00fv01qrdblmh1kp"
       style={{ width: '100%', height: '100%' }}
     >
       {/* Render markers for places with valid coordinates and collection data */}
